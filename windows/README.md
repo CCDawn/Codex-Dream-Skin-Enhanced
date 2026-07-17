@@ -66,6 +66,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify-dream-s
 打开 `Codex Dream Skin - Tray` 后可以：
 
 - 更换 PNG、JPEG、WebP 背景图，或 MP4、WebM 动态壁纸。
+- 使用「壁纸透出」滑杆调整覆盖在壁纸上的主题面板：100% 时视频保持原始画面，整页主题蒙层为零；设置会随主题持久化。
 - 保存当前主题并从「已保存主题」切换。
 - 暂停或继续显示皮肤。
 - 重新应用主题，或完整恢复 Codex。

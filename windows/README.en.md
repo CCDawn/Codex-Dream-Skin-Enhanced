@@ -66,6 +66,7 @@ Next, use the generated screenshot to check horizontal overflow and text contras
 Open `Codex Dream Skin - Tray` to:
 
 - Import a PNG, JPEG, or WebP background, or an MP4/WebM animated wallpaper.
+- Adjust wallpaper reveal: at 100% the video stays at its original opacity while the full-window theme veil reaches zero; the value persists with the theme.
 - Save the active theme and switch through saved themes.
 - Pause or resume the skin.
 - Reapply the theme or fully restore Codex.

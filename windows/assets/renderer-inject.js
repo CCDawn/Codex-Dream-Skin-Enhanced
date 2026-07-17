@@ -29,6 +29,8 @@
     "--dream-accent",
     "--dream-accent-ink",
     "--dream-image-luma",
+    "--dream-wallpaper-reveal",
+    "--dream-wallpaper-cover",
   ];
   const HOME_UTILITY_CLASS = "dream-home-utility";
   const installToken = {};
@@ -84,6 +86,9 @@
     const playbackRate = Number.isFinite(Number(media.playbackRate))
       ? clamp(Number(media.playbackRate), .25, 2)
       : 1;
+    const wallpaperReveal = Number.isFinite(Number(media.opacity))
+      ? clamp(Number(media.opacity))
+      : 1;
     const metadataRatio = Number(config?.artMetadata?.ratio);
     return {
       appearance,
@@ -97,6 +102,7 @@
       mediaMime,
       mediaSize,
       playbackRate,
+      wallpaperReveal,
     };
   };
 
@@ -352,6 +358,18 @@
     root.style.setProperty("--dream-accent", accent);
     root.style.setProperty("--dream-accent-ink", accentInk);
     root.style.setProperty("--dream-image-luma", profile.luma.toFixed(3));
+    root.style.setProperty("--dream-wallpaper-reveal", config.wallpaperReveal.toFixed(2));
+    root.style.setProperty("--dream-wallpaper-cover", `${Math.round((1 - config.wallpaperReveal) * 100)}%`);
+  };
+
+  const setWallpaperReveal = (value) => {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric < 0 || numeric > 1) return null;
+    config.wallpaperReveal = numeric;
+    const root = document.documentElement;
+    root?.style.setProperty("--dream-wallpaper-reveal", numeric.toFixed(2));
+    root?.style.setProperty("--dream-wallpaper-cover", `${Math.round((1 - numeric) * 100)}%`);
+    return numeric;
   };
 
   const syncMediaElement = () => {
@@ -528,7 +546,7 @@
   document.addEventListener?.("visibilitychange", visibilityHandler);
   window[STATE_KEY] = {
     ensure, cleanup, observer, timer, scheduler, artUrl, mediaUrl, beginMedia, appendMedia, commitMedia,
-    visibilityHandler, profile, config, installToken, version: "1.2.0",
+    setWallpaperReveal, visibilityHandler, profile, config, installToken, version: "1.2.0",
   };
   ensure();
   analyzeArt().then((result) => {
