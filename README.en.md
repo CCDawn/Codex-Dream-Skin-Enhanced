@@ -81,8 +81,9 @@ powershell -ExecutionPolicy Bypass -File .\windows\scripts\start-dream-skin.ps1
 ```
 
 After launch, switch directly through **已保存主题 → 桥本有菜**; no cross-folder
-manual import is required. **更换背景图** still imports your own UI-free
-wallpaper, which can then be saved for one-click switching.
+manual import is required. The enhanced **更换背景图或视频** action accepts
+PNG/JPEG/WebP artwork and muted looping MP4/WebM video, which can then be saved
+for one-click switching.
 
 > The downloadable user source is [`docs/images/presets/romantic-rose-source.png`](./docs/images/presets/romantic-rose-source.png) (`1672 × 941`); the macOS one-click preset uses the normalized derived [`background.jpg`](./macos/presets/preset-romantic-rose/background.jpg) (`2560 × 1440`). Do not import either screenshot above: they contain real UI and are previews only. The background is a user-provided AI-generated example, not an official OpenAI/Codex visual or endorsement; confirm likeness and asset rights before redistributing it.
 

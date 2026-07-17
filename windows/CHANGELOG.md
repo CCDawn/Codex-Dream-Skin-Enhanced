@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### 新增
+
+- Windows 主题仓库与托盘支持本地 MP4/WebM 动态壁纸；视频静音循环、页面隐藏时暂停，并可像图片主题一样保存和切换。
+- 视频采用上限 128 MB、单块 512 KiB 的 CDP 分块传输，在 renderer 内组装为 Blob URL，避免把完整视频塞进 early bootstrap payload；换主题、暂停和清理时会释放播放器与 Blob URL。
+- MP4/WebM 导入会校验扩展名、最小容器签名、大小、受管目录边界和 reparse point，伪造扩展名或越界路径会在复制前拒绝。
+
 ### 修复
 
 - 兼容新版 Codex 不再提供 `[role="main"]` 的任务页面：回退到 `main.main-surface` 承载任务背景，收起左侧边栏后也不会清除皮肤。

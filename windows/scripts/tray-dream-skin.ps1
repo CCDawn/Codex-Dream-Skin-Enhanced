@@ -90,16 +90,16 @@ try {
       Set-DreamSkinPaused -Paused $nextPaused -StateRoot $StateRoot | Out-Null
     }.GetNewClosure()
     $null = Add-DreamSkinTrayItem -Items $menu.Items -Text $pauseText -Action $pauseAction
-    $null = Add-DreamSkinTrayItem -Items $menu.Items -Text '更换背景图' -Action {
+    $null = Add-DreamSkinTrayItem -Items $menu.Items -Text '更换背景图或视频' -Action {
       $dialog = [System.Windows.Forms.OpenFileDialog]::new()
-      $dialog.Title = '选择 Codex Dream Skin 背景图'
-      $dialog.Filter = 'Image files|*.png;*.jpg;*.jpeg;*.webp|All files|*.*'
+      $dialog.Title = '选择 Codex Dream Skin 背景图或视频'
+      $dialog.Filter = 'Wallpaper files|*.png;*.jpg;*.jpeg;*.webp;*.mp4;*.webm|Image files|*.png;*.jpg;*.jpeg;*.webp|Video files|*.mp4;*.webm|All files|*.*'
       $dialog.Multiselect = $false
       try {
         if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
           $null = Set-DreamSkinActiveTheme -ImagePath $dialog.FileName -Theme $null -StateRoot $StateRoot
           Set-DreamSkinPaused -Paused $false -StateRoot $StateRoot | Out-Null
-          $notify.ShowBalloonTip(1800, 'Codex Dream Skin', '背景图已更新。', [System.Windows.Forms.ToolTipIcon]::Info)
+          $notify.ShowBalloonTip(1800, 'Codex Dream Skin', '背景素材已更新。', [System.Windows.Forms.ToolTipIcon]::Info)
         }
       } finally {
         $dialog.Dispose()
@@ -133,7 +133,7 @@ try {
     }
     [void]$menu.Items.Add($savedMenu)
 
-    $null = Add-DreamSkinTrayItem -Items $menu.Items -Text '打开图片文件夹' -Action {
+    $null = Add-DreamSkinTrayItem -Items $menu.Items -Text '打开素材文件夹' -Action {
       Start-Process -FilePath explorer.exe -ArgumentList @($paths.Images) | Out-Null
     }
     [void]$menu.Items.Add([System.Windows.Forms.ToolStripSeparator]::new())

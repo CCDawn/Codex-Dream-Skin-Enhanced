@@ -8,9 +8,9 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const windowsRoot = path.resolve(here, "..");
 const template = await fs.readFile(path.join(windowsRoot, "assets", "renderer-inject.js"), "utf8");
 const css = await fs.readFile(path.join(windowsRoot, "assets", "dream-skin.css"), "utf8");
-const buildPayload = (config = {}) => template
+const buildPayload = (config = {}, artDataUrl = "data:image/png;base64,AA==") => template
   .replace("__DREAM_CSS_JSON__", JSON.stringify(".fixture { color: blue; }"))
-  .replace("__DREAM_ART_JSON__", JSON.stringify("data:image/png;base64,AA=="))
+  .replace("__DREAM_ART_JSON__", JSON.stringify(artDataUrl))
   .replace("__DREAM_THEME_JSON__", JSON.stringify(config));
 const payload = buildPayload();
 
@@ -52,8 +52,10 @@ function createFixture({
   const rootStyles = new Map(staleSkin ? [["--dream-art", "url(\"blob:stale\")"]] : []);
   const revokedUrls = [];
   const observers = [];
+  const documentListeners = new Map();
   let objectUrlCount = 0;
   let hasShell = shellPresent;
+  let documentHidden = false;
   let root;
 
   const queueRootClassMutation = () => {
@@ -145,9 +147,15 @@ function createFixture({
       style: {},
       classList: makeClassList(),
       parentElement: null,
+      src: "",
+      paused: true,
       textContent: "",
       innerHTML: "",
       setAttribute() {},
+      removeAttribute(name) { if (name === "src") this.src = ""; },
+      load() {},
+      pause() { this.paused = true; },
+      play() { this.paused = false; return Promise.resolve(); },
       remove() { nodes.delete(this.id); },
     };
   };
@@ -164,6 +172,11 @@ function createFixture({
     documentElement: root,
     head: root,
     body,
+    get hidden() { return documentHidden; },
+    addEventListener(type, listener) { documentListeners.set(type, listener); },
+    removeEventListener(type, listener) {
+      if (documentListeners.get(type) === listener) documentListeners.delete(type);
+    },
     createElement,
     getElementById(id) { return nodes.get(id) ?? null; },
     querySelector(selector) {
@@ -250,6 +263,10 @@ function createFixture({
     shellMainClasses,
     utilityClasses,
     setShellPresent(value) { hasShell = value; },
+    setDocumentHidden(value) {
+      documentHidden = value;
+      documentListeners.get("visibilitychange")?.();
+    },
   };
 }
 
@@ -403,5 +420,28 @@ const metadataWide = createFixture({ shellPresent: true });
 vm.runInNewContext(buildPayload({ artMetadata: { ratio: 16 / 9 } }), metadataWide.context);
 assert.equal(metadataWide.rootClasses.has("dream-art-wide"), true);
 assert.equal(metadataWide.rootClasses.has("dream-art-standard"), false);
+
+const videoTheme = createFixture({ shellPresent: true });
+vm.runInNewContext(buildPayload({
+  media: { type: "video", mime: "video/mp4", size: 4, playbackRate: 1 },
+  artMetadata: { ratio: 16 / 9 },
+}, ""), videoTheme.context);
+assert.equal(videoTheme.rootClasses.has("dream-art-video"), true);
+const videoState = videoTheme.context.window.__CODEX_DREAM_SKIN_STATE__;
+assert.equal(videoState.beginMedia({ mime: "video/mp4", size: 4 }), true);
+assert.equal(videoState.appendMedia("AAECAw=="), true);
+assert.equal(videoState.commitMedia(), true);
+assert.equal(videoTheme.nodes.has("codex-dream-skin-media"), true);
+assert.equal(videoTheme.nodes.get("codex-dream-skin-media").muted, true);
+assert.equal(videoTheme.nodes.get("codex-dream-skin-media").loop, true);
+assert.equal(videoTheme.nodes.get("codex-dream-skin-media").paused, false);
+videoTheme.setDocumentHidden(true);
+assert.equal(videoTheme.nodes.get("codex-dream-skin-media").paused, true);
+videoTheme.setDocumentHidden(false);
+assert.equal(videoTheme.nodes.get("codex-dream-skin-media").paused, false);
+assert.equal(videoTheme.rootStyles.get("--dream-art"), "none");
+assert.equal(videoState.cleanup(), true);
+assert.equal(videoTheme.nodes.has("codex-dream-skin-media"), false);
+assert.deepEqual(videoTheme.revokedUrls, ["blob:fixture-1"]);
 
 console.log("PASS: renderer applies adaptive theme metadata and preserves transparent auxiliary windows.");

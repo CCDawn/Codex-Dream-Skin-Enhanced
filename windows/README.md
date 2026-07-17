@@ -65,12 +65,14 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify-dream-s
 
 打开 `Codex Dream Skin - Tray` 后可以：
 
-- 更换 PNG、JPEG 或 WebP 背景图。
+- 更换 PNG、JPEG、WebP 背景图，或 MP4、WebM 动态壁纸。
 - 保存当前主题并从「已保存主题」切换。
 - 暂停或继续显示皮肤。
 - 重新应用主题，或完整恢复 Codex。
 
 导入图片必须是纯背景，不要使用包含窗口、侧栏、输入框、文字或按钮的效果截图。图片上限为 16 MB；宽或高不能超过 16384 像素，总像素不能超过 5000 万。
+
+动态壁纸始终静音、循环且不拦截鼠标操作；Codex 页面隐藏时会自动暂停。视频上限为 128 MB，并通过有界 CDP 分块传入当前 renderer，不会上传到网络，也不会把整段视频嵌入启动脚本。当前 MVP 不提供声音、播放列表或 Live2D。
 
 ## 恢复与卸载快捷方式
 

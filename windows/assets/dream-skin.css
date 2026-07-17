@@ -56,6 +56,8 @@
 }
 
 html.codex-dream-skin body {
+  position: relative;
+  isolation: isolate;
   background: var(--dream-canvas) !important;
   color: var(--dream-text) !important;
   font-family: "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI", system-ui, sans-serif !important;
@@ -131,6 +133,22 @@ html.codex-dream-skin.dream-theme-dark [class~="group/application-menu-top-bar"]
 #codex-dream-skin-chrome {
   display: none !important;
   pointer-events: none !important;
+}
+
+#codex-dream-skin-media {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  border: 0;
+  object-fit: cover;
+  object-position: var(--dream-art-position);
+  pointer-events: none;
+}
+
+html.codex-dream-skin.dream-art-video body {
+  background-image: none !important;
 }
 
 html.codex-dream-skin [role="main"] {
