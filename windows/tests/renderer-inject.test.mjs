@@ -34,6 +34,36 @@ assert.match(
   /main\.main-surface\.dream-task\s+\.app-shell-main-content-top-fade\s*\{[^}]*display:\s*none !important;/,
   "Fallback task routes must remove the native top fade seam.",
 );
+assert.match(
+  css,
+  /html\.codex-dream-skin \[class~="group\/application-menu-top-bar"\]\s*\{[^}]*background:\s*color-mix\([^}]*backdrop-filter:\s*blur\(/,
+  "The native application menu must have a legibility layer in both light and dark themes.",
+);
+assert.match(
+  css,
+  /html\.codex-dream-skin \[class~="group\/application-menu-top-bar"\] button,[\s\S]*?\[class~="group\/application-menu-top-bar"\] svg\s*\{[^}]*color:\s*var\(--dream-text\) !important;/,
+  "Application menu controls must use the opaque adaptive theme text color.",
+);
+assert.match(
+  css,
+  /\.dream-art-video main\.main-surface\s*>\s*header\.app-header-tint\s*\{[^}]*background:\s*color-mix\([^}]*backdrop-filter:\s*blur\(/,
+  "Dynamic wallpaper mode must protect the secondary Codex toolbar from changing video frames.",
+);
+assert.match(
+  css,
+  /#codex-dream-skin-media\s*\{[^}]*opacity:\s*1\b/,
+  "Dynamic wallpaper must stay at its original opacity.",
+);
+assert.match(
+  css,
+  /linear-gradient\(var\(--dream-media-overlay\),\s*var\(--dream-media-overlay\)\),\s*var\(--dream-art\)/,
+  "Static wallpaper surfaces must blend with the canvas through the shared reveal control.",
+);
+assert.match(
+  css,
+  /--dream-immersive-edge:\s*color-mix\([^;]*var\(--dream-wallpaper-cover\)[^;]*transparent\)/,
+  "The full-window foreground veil must disappear as wallpaper reveal reaches 100%.",
+);
 
 function createFixture({
   shellPresent,
@@ -335,6 +365,7 @@ const configuredPayload = buildPayload({
   appearance: "light",
   palette: { accent: "#d45a70" },
   art: { focusX: .15, focusY: .8, safeArea: "right", taskMode: "off" },
+  media: { opacity: 0.35 },
 });
 const configuredResult = vm.runInNewContext(configuredPayload, configured.context);
 assert.equal(configuredResult.adaptive, true);
@@ -345,6 +376,8 @@ assert.equal(configured.rootClasses.has("dream-safe-right"), true);
 assert.equal(configured.rootClasses.has("dream-task-off"), true);
 assert.equal(configured.rootStyles.get("--dream-art-position"), "15% 80%");
 assert.equal(configured.rootStyles.get("--dream-accent"), "#d45a70");
+assert.equal(configured.rootStyles.get("--dream-wallpaper-reveal"), "0.35");
+assert.equal(configured.rootStyles.get("--dream-wallpaper-cover"), "65%");
 assert.equal(configured.routeClasses.has("dream-home"), true);
 assert.equal(configured.routeClasses.has("dream-task"), false);
 assert.equal(configured.utilityClasses.has("dream-home-utility"), true);
@@ -423,10 +456,11 @@ assert.equal(metadataWide.rootClasses.has("dream-art-standard"), false);
 
 const videoTheme = createFixture({ shellPresent: true });
 vm.runInNewContext(buildPayload({
-  media: { type: "video", mime: "video/mp4", size: 4, playbackRate: 1 },
+  media: { type: "video", mime: "video/mp4", size: 4, playbackRate: 1, opacity: 0.6 },
   artMetadata: { ratio: 16 / 9 },
 }, ""), videoTheme.context);
 assert.equal(videoTheme.rootClasses.has("dream-art-video"), true);
+assert.equal(videoTheme.rootStyles.get("--dream-wallpaper-reveal"), "0.60");
 const videoState = videoTheme.context.window.__CODEX_DREAM_SKIN_STATE__;
 assert.equal(videoState.beginMedia({ mime: "video/mp4", size: 4 }), true);
 assert.equal(videoState.appendMedia("AAECAw=="), true);
@@ -435,6 +469,10 @@ assert.equal(videoTheme.nodes.has("codex-dream-skin-media"), true);
 assert.equal(videoTheme.nodes.get("codex-dream-skin-media").muted, true);
 assert.equal(videoTheme.nodes.get("codex-dream-skin-media").loop, true);
 assert.equal(videoTheme.nodes.get("codex-dream-skin-media").paused, false);
+assert.equal(videoState.setWallpaperReveal(0.25), 0.25);
+assert.equal(videoTheme.rootStyles.get("--dream-wallpaper-reveal"), "0.25");
+assert.equal(videoTheme.rootStyles.get("--dream-wallpaper-cover"), "75%");
+assert.equal(videoState.setWallpaperReveal(2), null);
 videoTheme.setDocumentHidden(true);
 assert.equal(videoTheme.nodes.get("codex-dream-skin-media").paused, true);
 videoTheme.setDocumentHidden(false);

@@ -4,7 +4,11 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { transferVideoToSession } from "../scripts/injector.mjs";
+import {
+  isOpacityOnlyThemeChange,
+  setOpacityOnSession,
+  transferVideoToSession,
+} from "../scripts/injector.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const injectorPath = path.resolve(here, "../scripts/injector.mjs");
@@ -41,7 +45,7 @@ try {
     name: "Video Fixture",
     image: "loop.mp4",
     appearance: "dark",
-    media: { type: "video", playbackRate: 1.25 },
+    media: { type: "video", playbackRate: 1.25, opacity: 0.4 },
     art: { focusX: 0.5, focusY: 0.5, safeArea: "center", taskMode: "ambient" },
   }));
 
@@ -51,6 +55,7 @@ try {
   assert.equal(summary.media.type, "video");
   assert.equal(summary.media.mime, "video/mp4");
   assert.equal(summary.media.size, videoBytes.length);
+  assert.equal(summary.media.opacity, 0.4);
   assert.ok(summary.payloadBytes < videoBytes.length,
     "The CDP bootstrap payload must not embed the complete video.");
 
@@ -73,6 +78,29 @@ try {
   assert.ok(expressions.slice(1, -1).every((expression) => expression.includes(".appendMedia(")));
   assert.ok(expressions.every((expression) => Buffer.byteLength(expression) < 1024 * 1024));
 
+  const opacityExpressions = [];
+  const opacitySession = {
+    async evaluate(expression) {
+      opacityExpressions.push(expression);
+      return true;
+    },
+  };
+  assert.equal(await setOpacityOnSession(opacitySession, 0.65), 0.65);
+  assert.match(opacityExpressions[0], /setWallpaperReveal/);
+
+  const previousTheme = {
+    mediaPath: videoPath,
+    mediaType: "video",
+    mediaMime: "video/mp4",
+    mediaSize: videoBytes.length,
+    theme: { id: "same", media: { type: "video", playbackRate: 1, opacity: 0.4 } },
+  };
+  const opacityTheme = structuredClone(previousTheme);
+  opacityTheme.theme.media.opacity = 0.65;
+  assert.equal(isOpacityOnlyThemeChange(previousTheme, opacityTheme), true);
+  opacityTheme.theme.media.playbackRate = 1.25;
+  assert.equal(isOpacityOnlyThemeChange(previousTheme, opacityTheme), false);
+
   const invalidDirectory = path.join(temporary, "invalid");
   await fs.mkdir(invalidDirectory);
   await fs.writeFile(path.join(invalidDirectory, "fake.mp4"), Buffer.from("not an mp4"));
@@ -84,6 +112,18 @@ try {
   const rejected = await runInjector(invalidDirectory);
   assert.notEqual(rejected.code, 0);
   assert.match(rejected.stderr, /signature|container/i);
+
+  const invalidOpacityDirectory = path.join(temporary, "invalid-opacity");
+  await fs.mkdir(invalidOpacityDirectory);
+  await fs.copyFile(videoPath, path.join(invalidOpacityDirectory, "loop.mp4"));
+  await fs.writeFile(path.join(invalidOpacityDirectory, "theme.json"), JSON.stringify({
+    id: "invalid-opacity",
+    image: "loop.mp4",
+    media: { type: "video", opacity: 1.1 },
+  }));
+  const rejectedOpacity = await runInjector(invalidOpacityDirectory);
+  assert.notEqual(rejectedOpacity.code, 0);
+  assert.match(rejectedOpacity.stderr, /opacity/i);
 } finally {
   await fs.rm(temporary, { recursive: true, force: true });
 }

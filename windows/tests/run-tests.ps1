@@ -632,9 +632,29 @@ try {
     $updatedTheme.Theme.id -cne 'custom' -or
     $updatedTheme.Theme.art.safeArea -cne 'auto' -or
     $updatedTheme.Theme.art.taskMode -cne 'auto' -or
+    [double]$updatedTheme.Theme.media.opacity -ne 1 -or
     -not (Test-DreamSkinThemePathWithin -Path $updatedTheme.ImagePath -Root $themePaths.Active)) {
     throw 'Imported image did not reset to the generic adaptive contract inside the managed directory.'
   }
+  $opacityTheme = Set-DreamSkinActiveThemeMediaOpacity -Opacity 0.42 -StateRoot $themeStateRoot
+  if ([math]::Abs((Get-DreamSkinThemeMediaOpacity -Theme $opacityTheme.Theme) - 0.42) -gt 0.000001) {
+    throw 'Active theme opacity was not persisted.'
+  }
+  if ((Get-DreamSkinThemeMediaRevealPercent -Theme ([pscustomobject]@{
+      media = [pscustomobject]@{ opacity = 1 }
+    })) -ne 100 -or
+    (Get-DreamSkinThemeMediaRevealPercent -Theme ([pscustomobject]@{
+      media = [pscustomobject]@{ opacity = 0 }
+    })) -ne 0 -or
+    [math]::Abs((ConvertTo-DreamSkinMediaOpacityFromRevealPercent -Percent 100) - 1) -gt 0.000001 -or
+    [math]::Abs((ConvertTo-DreamSkinMediaOpacityFromRevealPercent -Percent 55) - 0.55) -gt 0.000001) {
+    throw 'Tray wallpaper reveal percentage does not match the foreground veil contract.'
+  }
+  $invalidOpacityRejected = $false
+  try { $null = Set-DreamSkinActiveThemeMediaOpacity -Opacity 1.1 -StateRoot $themeStateRoot } catch {
+    $invalidOpacityRejected = $true
+  }
+  if (-not $invalidOpacityRejected) { throw 'Theme opacity accepted a value above 1.' }
   $null = Initialize-DreamSkinThemeStore -SkillRoot $Root -StateRoot $themeStateRoot
   $idempotentTheme = Read-DreamSkinTheme -ThemeDirectory $themePaths.Active
   if ($idempotentTheme.Theme.id -cne 'custom' -or
@@ -642,7 +662,9 @@ try {
     throw 'Theme-store initialization overwrote the active custom theme or duplicated its bundled preset.'
   }
   $savedTheme = Save-DreamSkinCurrentTheme -Name '已保存主题' -StateRoot $themeStateRoot
-  if ($savedTheme.Theme.name -cne '已保存主题' -or @(Get-DreamSkinSavedThemes -StateRoot $themeStateRoot).Count -ne 2) {
+  if ($savedTheme.Theme.name -cne '已保存主题' -or
+    [math]::Abs((Get-DreamSkinThemeMediaOpacity -Theme $savedTheme.Theme) - 0.42) -gt 0.000001 -or
+    @(Get-DreamSkinSavedThemes -StateRoot $themeStateRoot).Count -ne 2) {
     throw 'Saved theme creation or discovery failed.'
   }
   $null = Use-DreamSkinSavedTheme -ThemeDirectory $savedTheme.Directory -StateRoot $themeStateRoot
@@ -657,6 +679,7 @@ try {
   $videoTheme = Set-DreamSkinActiveTheme -ImagePath $videoFixture -Theme $null `
     -Name '动态测试主题' -StateRoot $themeStateRoot
   if ($videoTheme.Theme.media.type -cne 'video' -or
+    [double]$videoTheme.Theme.media.opacity -ne 1 -or
     [System.IO.Path]::GetExtension($videoTheme.ImagePath) -cne '.mp4' -or
     -not (Test-DreamSkinThemePathWithin -Path $videoTheme.ImagePath -Root $themePaths.Active)) {
     throw 'Imported video did not become a managed dynamic theme.'
@@ -742,6 +765,9 @@ try {
   $css = Read-DreamSkinUtf8File -Path (Join-Path $Root 'assets\dream-skin.css')
   foreach ($requiredCss in @(
     'background-image: var(--dream-art)',
+    '--dream-wallpaper-reveal',
+    '--dream-wallpaper-cover',
+    '--dream-media-overlay',
     'main.main-surface > header.app-header-tint',
     '[class~="group/application-menu-top-bar"]',
     '.app-shell-main-content-top-fade',
@@ -755,7 +781,7 @@ try {
     if (-not $css.Contains($requiredCss)) { throw "Windows immersive CSS is missing: $requiredCss" }
   }
   $traySource = Read-DreamSkinUtf8File -Path (Join-Path $Root 'scripts\tray-dream-skin.ps1')
-  foreach ($requiredTrayAction in @('System.Windows.Forms.NotifyIcon', '暂停皮肤', '更换背景图或视频', '*.mp4;*.webm', '已保存主题', '完全恢复 Codex')) {
+  foreach ($requiredTrayAction in @('System.Windows.Forms.NotifyIcon', 'System.Windows.Forms.TrackBar', '壁纸透出', '暂停皮肤', '更换背景图或视频', '*.mp4;*.webm', '已保存主题', '完全恢复 Codex')) {
     if (-not $traySource.Contains($requiredTrayAction)) { throw "Tray action is missing: $requiredTrayAction" }
   }
   if (-not $traySource.Contains('[AllowEmptyCollection()][System.Windows.Forms.ToolStripItemCollection]$Items')) {

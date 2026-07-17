@@ -66,6 +66,51 @@ try {
     return $item
   }
 
+  function Add-DreamSkinRevealControl {
+    param(
+      [Parameter(Mandatory = $true)][AllowEmptyCollection()][System.Windows.Forms.ToolStripItemCollection]$Items,
+      [Parameter(Mandatory = $true)][object]$Theme
+    )
+    $percent = Get-DreamSkinThemeMediaRevealPercent -Theme $Theme
+    $label = [System.Windows.Forms.ToolStripLabel]::new("壁纸透出：$percent%")
+    $label.Margin = [System.Windows.Forms.Padding]::new(8, 3, 8, 0)
+    [void]$Items.Add($label)
+
+    $trackBar = [System.Windows.Forms.TrackBar]::new()
+    $trackBar.Minimum = 0
+    $trackBar.Maximum = 100
+    $trackBar.Value = $percent
+    $trackBar.TickFrequency = 10
+    $trackBar.SmallChange = 5
+    $trackBar.LargeChange = 10
+    $trackBar.AutoSize = $false
+    $trackBar.Size = [System.Drawing.Size]::new(250, 38)
+    $trackBar.AccessibleName = '壁纸透出程度'
+
+    $updateLabel = {
+      $label.Text = "壁纸透出：$($trackBar.Value)%"
+    }.GetNewClosure()
+    $commitReveal = {
+      try {
+        $label.Text = "壁纸透出：$($trackBar.Value)%"
+        $null = Set-DreamSkinActiveThemeMediaOpacity `
+          -Opacity (ConvertTo-DreamSkinMediaOpacityFromRevealPercent -Percent $trackBar.Value) `
+          -StateRoot $StateRoot
+      } catch {
+        Show-DreamSkinTrayError -Message $_.Exception.Message
+      }
+    }.GetNewClosure()
+    $trackBar.add_Scroll($updateLabel)
+    $trackBar.add_MouseUp($commitReveal)
+    $trackBar.add_KeyUp($commitReveal)
+
+    $controlHost = [System.Windows.Forms.ToolStripControlHost]::new($trackBar)
+    $controlHost.AutoSize = $false
+    $controlHost.Size = [System.Drawing.Size]::new(270, 42)
+    $controlHost.Margin = [System.Windows.Forms.Padding]::new(4, 0, 4, 4)
+    [void]$Items.Add($controlHost)
+  }
+
   function Rebuild-DreamSkinTrayMenu {
     $menu.Items.Clear()
     $paused = Test-DreamSkinPaused -StateRoot $StateRoot
@@ -78,6 +123,9 @@ try {
       $status += " · $($active.Theme.name)"
     }
     $null = Add-DreamSkinTrayItem -Items $menu.Items -Text $status -Action $null -Enabled $false
+    if ($null -ne $active -and $null -ne $active.Theme) {
+      Add-DreamSkinRevealControl -Items $menu.Items -Theme $active.Theme
+    }
     [void]$menu.Items.Add([System.Windows.Forms.ToolStripSeparator]::new())
 
     $null = Add-DreamSkinTrayItem -Items $menu.Items -Text '应用或重新应用' -Action {

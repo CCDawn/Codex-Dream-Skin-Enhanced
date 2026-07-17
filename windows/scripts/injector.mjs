@@ -371,6 +371,11 @@ async function loadTheme(themeDir) {
   if (!Number.isFinite(playbackRate) || playbackRate < 0.25 || playbackRate > 2) {
     throw new Error("media.playbackRate must be between 0.25 and 2");
   }
+  const opacity = rawMedia.opacity === null || rawMedia.opacity === undefined
+    ? 1 : Number(rawMedia.opacity);
+  if (!Number.isFinite(opacity) || opacity < 0 || opacity > 1) {
+    throw new Error("media.opacity must be between 0 and 1");
+  }
   const theme = {
     id: normalizedText(raw.id, "id", "custom", 80),
     name: normalizedText(raw.name, "name", "Codex Dream Skin", 120),
@@ -386,6 +391,7 @@ async function loadTheme(themeDir) {
     media: {
       type: inferredMediaType,
       playbackRate,
+      opacity,
     },
   };
   if (typeof palette.accent === "string" && palette.accent.trim()) {
@@ -460,6 +466,21 @@ async function loadPayload(themeDir = path.join(root, "assets"), candidateTheme 
     .replace("__DREAM_THEME_JSON__", JSON.stringify(loadedTheme.theme));
   const { mediaBytes: _mediaBytes, ...themeState } = loadedTheme;
   return { ...themeState, payload };
+}
+
+export function isOpacityOnlyThemeChange(previous, next) {
+  if (!previous || !next ||
+      previous.mediaPath !== next.mediaPath ||
+      previous.mediaType !== next.mediaType ||
+      previous.mediaMime !== next.mediaMime ||
+      previous.mediaSize !== next.mediaSize) return false;
+  const withoutOpacity = (theme) => {
+    const comparable = structuredClone(theme);
+    if (comparable.media) delete comparable.media.opacity;
+    return comparable;
+  };
+  return JSON.stringify(withoutOpacity(previous.theme)) === JSON.stringify(withoutOpacity(next.theme)) &&
+    previous.theme?.media?.opacity !== next.theme?.media?.opacity;
 }
 
 async function fileExists(filePath) {
@@ -595,6 +616,18 @@ export async function transferVideoToSession(session, loadedPayload) {
   return { bytes: offset, chunks };
 }
 
+export async function setOpacityOnSession(session, value) {
+  const opacity = normalizedUnit(value, "media.opacity");
+  if (opacity === null) throw new Error("media.opacity must be a number between 0 and 1");
+  const applied = await session.evaluate(`(() => {
+    const requested = ${JSON.stringify(opacity)};
+    const actual = window.__CODEX_DREAM_SKIN_STATE__?.setWallpaperReveal?.(requested);
+    return Number.isFinite(actual) && Math.abs(actual - requested) < 0.000001;
+  })()`);
+  if (!applied) throw new Error("Renderer rejected the wallpaper reveal update");
+  return opacity;
+}
+
 async function applyToSession(session, loadedPayload) {
   const result = await session.evaluate(loadedPayload.payload);
   if (loadedPayload.mediaType === "video") {
@@ -664,7 +697,8 @@ async function removeFromSession(session) {
     );
     for (const property of [
       '--dream-art', '--dream-art-position', '--dream-focus-x', '--dream-focus-y',
-      '--dream-accent', '--dream-accent-ink', '--dream-image-luma'
+      '--dream-accent', '--dream-accent-ink', '--dream-image-luma',
+      '--dream-wallpaper-reveal', '--dream-wallpaper-cover'
     ]) document.documentElement?.style.removeProperty(property);
     document.querySelectorAll('.dream-home').forEach((node) => node.classList.remove('dream-home'));
     document.querySelectorAll('.dream-task').forEach((node) => node.classList.remove('dream-task'));
@@ -709,8 +743,14 @@ async function verifySession(session) {
       chromePresent: Boolean(document.getElementById('codex-dream-skin-chrome')),
       chromePointerEvents: getComputedStyle(document.getElementById('codex-dream-skin-chrome') || document.body).pointerEvents,
       mediaType: window.__CODEX_DREAM_SKIN_STATE__?.config?.mediaType ?? 'image',
+      wallpaperReveal: window.__CODEX_DREAM_SKIN_STATE__?.config?.wallpaperReveal ?? null,
       mediaPresent: Boolean(document.getElementById('codex-dream-skin-media')),
       mediaReady: Boolean(window.__CODEX_DREAM_SKIN_STATE__?.mediaUrl),
+      mediaElementOpacity: document.getElementById('codex-dream-skin-media')
+        ? getComputedStyle(document.getElementById('codex-dream-skin-media')).opacity
+        : null,
+      mainBackground: getComputedStyle(document.querySelector('main.main-surface') || document.body).backgroundImage,
+      sidebarBackground: getComputedStyle(document.querySelector('aside.app-shell-left-panel') || document.body).backgroundImage,
       homePresent: Boolean(home),
       suggestionsPresent: Boolean(suggestions),
       hero: box(home?.firstElementChild?.firstElementChild?.firstElementChild),
@@ -726,7 +766,9 @@ async function verifySession(session) {
     result.pass = result.installed && result.version === result.expectedVersion &&
       result.stylePresent && result.chromePresent &&
       result.chromePointerEvents === 'none' && Boolean(result.composer) && Boolean(result.sidebar) &&
-      (result.mediaType !== 'video' || (result.mediaPresent && result.mediaReady)) &&
+      Number.isFinite(result.wallpaperReveal) && result.wallpaperReveal >= 0 && result.wallpaperReveal <= 1 &&
+      (result.mediaType !== 'video' ||
+        (result.mediaPresent && result.mediaReady && result.mediaElementOpacity === '1')) &&
       (!result.homePresent || (Boolean(result.hero) &&
         (!result.suggestionsPresent || (result.cards.length >= 2 && result.cards.length <= 4))));
     return result;
@@ -915,6 +957,8 @@ async function runWatch(options) {
       }
       const pauseChanged = nextPaused !== paused;
       const payloadChanged = !nextPaused && nextPayload !== loadedPayload;
+      const opacityOnlyChanged = payloadChanged && !pauseChanged &&
+        isOpacityOnlyThemeChange(loadedPayload, nextPayload);
       loadedPayload = nextPayload;
       paused = nextPaused;
 
@@ -948,7 +992,11 @@ async function runWatch(options) {
               if (loadedPayload.mediaType === "video") {
                 attachLoadFallback(id, { id }, session);
               }
-              await applyToSession(session, loadedPayload);
+              if (opacityOnlyChanged) {
+                await setOpacityOnSession(session, loadedPayload.theme.media.opacity);
+              } else {
+                await applyToSession(session, loadedPayload);
+              }
             }
           } catch (error) {
             console.error(`[dream-skin] live theme update failed for ${id}: ${error.message}`);

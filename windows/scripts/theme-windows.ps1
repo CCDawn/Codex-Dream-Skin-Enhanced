@@ -130,6 +130,46 @@ function Get-DreamSkinMediaType {
   throw "Unsupported theme media format: $extension"
 }
 
+function ConvertTo-DreamSkinMediaOpacity {
+  param(
+    [AllowNull()][object]$Value,
+    [double]$Default = 1
+  )
+  if ($null -eq $Value -or "$Value" -eq '') { return $Default }
+  try { $opacity = [double]$Value } catch { throw 'Theme media opacity must be a number between 0 and 1.' }
+  if ([double]::IsNaN($opacity) -or [double]::IsInfinity($opacity) -or
+    $opacity -lt 0 -or $opacity -gt 1) {
+    throw 'Theme media opacity must be a number between 0 and 1.'
+  }
+  return $opacity
+}
+
+function Get-DreamSkinThemeMediaOpacity {
+  param([AllowNull()][object]$Theme)
+  if ($null -eq $Theme -or $null -eq $Theme.media) { return [double]1 }
+  $property = $Theme.media.PSObject.Properties['opacity']
+  if ($null -eq $property) { return [double]1 }
+  return ConvertTo-DreamSkinMediaOpacity -Value $property.Value
+}
+
+function Get-DreamSkinThemeMediaRevealPercent {
+  param([AllowNull()][object]$Theme)
+  $opacity = Get-DreamSkinThemeMediaOpacity -Theme $Theme
+  return [int][math]::Round($opacity * 100)
+}
+
+function ConvertTo-DreamSkinMediaOpacityFromRevealPercent {
+  param([Parameter(Mandatory = $true)][object]$Percent)
+  try { $reveal = [double]$Percent } catch {
+    throw 'Theme wallpaper reveal must be a number between 0 and 100.'
+  }
+  if ([double]::IsNaN($reveal) -or [double]::IsInfinity($reveal) -or
+    $reveal -lt 0 -or $reveal -gt 100) {
+    throw 'Theme wallpaper reveal must be a number between 0 and 100.'
+  }
+  return [double]($reveal / 100)
+}
+
 function Assert-DreamSkinMediaFile {
   param(
     [Parameter(Mandatory = $true)][string]$Path,
@@ -219,6 +259,7 @@ function Read-DreamSkinTheme {
   if ($theme.media -and $theme.media.type -and "$($theme.media.type)" -cne $mediaType) {
     throw "Theme media type does not match its file extension: $mediaPath"
   }
+  $null = Get-DreamSkinThemeMediaOpacity -Theme $theme
   return [pscustomobject]@{
     Directory = $directory
     ThemePath = $themePath
@@ -322,7 +363,7 @@ function Set-DreamSkinActiveTheme {
       appearance = 'auto'
       art = [pscustomobject]@{ focusX = $null; focusY = $null; safeArea = 'auto'; taskMode = 'auto' }
       palette = [pscustomobject]@{}
-      media = [pscustomobject]@{ type = $mediaType; playbackRate = 1 }
+      media = [pscustomobject]@{ type = $mediaType; playbackRate = 1; opacity = 1 }
     }
   }
   $imageName = New-DreamSkinThemeImageName -Extension $extension
@@ -341,7 +382,7 @@ function Set-DreamSkinActiveTheme {
     $Theme | Add-Member -NotePropertyName media -NotePropertyValue `
       ([pscustomobject]@{ type = $mediaType; playbackRate = if ($Theme.media.playbackRate) {
         [double]$Theme.media.playbackRate
-      } else { 1 } }) -Force
+      } else { 1 }; opacity = Get-DreamSkinThemeMediaOpacity -Theme $Theme }) -Force
     if ($Name) { $Theme | Add-Member -NotePropertyName name -NotePropertyValue $Name -Force }
     if (-not $Theme.id) { $Theme | Add-Member -NotePropertyName id -NotePropertyValue 'custom' -Force }
     if (-not $Theme.appearance) { $Theme | Add-Member -NotePropertyName appearance -NotePropertyValue 'auto' -Force }
@@ -367,6 +408,25 @@ function Set-DreamSkinActiveTheme {
   Assert-DreamSkinNoReparseComponents -Path $imageArchive
   $null = Assert-DreamSkinMediaFile -Path $imageArchive
   return Read-DreamSkinTheme -ThemeDirectory $paths.Active
+}
+
+function Set-DreamSkinActiveThemeMediaOpacity {
+  param(
+    [Parameter(Mandatory = $true)][object]$Opacity,
+    [string]$StateRoot = (Join-Path $env:LOCALAPPDATA 'CodexDreamSkin')
+  )
+  $normalized = ConvertTo-DreamSkinMediaOpacity -Value $Opacity
+  $paths = Get-DreamSkinThemePaths -StateRoot $StateRoot
+  $active = Read-DreamSkinTheme -ThemeDirectory $paths.Active -SkipImageMetadata
+  $theme = $active.Theme | ConvertTo-Json -Depth 8 | ConvertFrom-Json
+  if ($null -eq $theme.media) {
+    $theme | Add-Member -NotePropertyName media -NotePropertyValue `
+      ([pscustomobject]@{ type = $active.MediaType; playbackRate = 1; opacity = $normalized }) -Force
+  } else {
+    $theme.media | Add-Member -NotePropertyName opacity -NotePropertyValue $normalized -Force
+  }
+  Write-DreamSkinTheme -ThemeDirectory $paths.Active -Theme $theme
+  return Read-DreamSkinTheme -ThemeDirectory $paths.Active -SkipImageMetadata
 }
 
 function Save-DreamSkinCurrentTheme {
