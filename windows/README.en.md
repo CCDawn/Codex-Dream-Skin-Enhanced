@@ -65,12 +65,14 @@ Next, use the generated screenshot to check horizontal overflow and text contras
 
 Open `Codex Dream Skin - Tray` to:
 
-- Import a PNG, JPEG, or WebP background.
+- Import a PNG, JPEG, or WebP background, or an MP4/WebM animated wallpaper.
 - Save the active theme and switch through saved themes.
 - Pause or resume the skin.
 - Reapply the theme or fully restore Codex.
 
 Import a UI-free wallpaper rather than a preview containing a window, sidebar, composer, text, or buttons. Images may be at most 16 MB, 16384 pixels on either side, and 50 million total pixels.
+
+Animated wallpapers are always muted, looped, pointer-transparent, and paused while the Codex page is hidden. Videos may be at most 128 MB and are transferred to the current renderer in bounded CDP chunks; they are not uploaded or embedded wholesale in the bootstrap script. Audio, playlists, and Live2D are outside this MVP.
 
 ## Restore and remove shortcuts
 

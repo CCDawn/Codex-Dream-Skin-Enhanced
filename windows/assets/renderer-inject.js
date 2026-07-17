@@ -2,10 +2,12 @@
   const STATE_KEY = "__CODEX_DREAM_SKIN_STATE__";
   const STYLE_ID = "codex-dream-skin-style";
   const CHROME_ID = "codex-dream-skin-chrome";
+  const MEDIA_ID = "codex-dream-skin-media";
   const ROOT_CLASSES = [
     "codex-dream-skin",
     "dream-theme-light",
     "dream-theme-dark",
+    "dream-art-video",
     "dream-art-wide",
     "dream-art-standard",
     "dream-focus-left",
@@ -73,6 +75,15 @@
     const taskMode = ["auto", "ambient", "banner", "off"].includes(art.taskMode)
       ? art.taskMode
       : "auto";
+    const media = config.media && typeof config.media === "object" ? config.media : {};
+    const mediaType = media.type === "video" ? "video" : "image";
+    const mediaMime = ["video/mp4", "video/webm"].includes(media.mime) ? media.mime : null;
+    const mediaSize = Number.isSafeInteger(Number(media.size)) && Number(media.size) > 0
+      ? Number(media.size)
+      : null;
+    const playbackRate = Number.isFinite(Number(media.playbackRate))
+      ? clamp(Number(media.playbackRate), .25, 2)
+      : 1;
     const metadataRatio = Number(config?.artMetadata?.ratio);
     return {
       appearance,
@@ -82,6 +93,10 @@
       focusY: hasNumber(art.focusY) ? clamp(art.focusY) : null,
       accent: safeAccent,
       initialAspect: Number.isFinite(metadataRatio) && metadataRatio > 0 ? metadataRatio : null,
+      mediaType,
+      mediaMime,
+      mediaSize,
+      playbackRate,
     };
   };
 
@@ -90,8 +105,15 @@
   if (previous?.timer) clearInterval(previous.timer);
   if (previous?.scheduler?.timeout) clearTimeout(previous.scheduler.timeout);
   if (previous?.artUrl) URL.revokeObjectURL(previous.artUrl);
+  if (previous?.mediaUrl) URL.revokeObjectURL(previous.mediaUrl);
+  if (previous?.visibilityHandler) {
+    document.removeEventListener?.("visibilitychange", previous.visibilityHandler);
+  }
+  document.getElementById(MEDIA_ID)?.remove();
   const artUrl = (() => {
+    if (!artDataUrl) return null;
     const comma = artDataUrl.indexOf(",");
+    if (comma < 0) return null;
     const binary = atob(artDataUrl.slice(comma + 1));
     const bytes = new Uint8Array(binary.length);
     for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
@@ -99,9 +121,11 @@
     return URL.createObjectURL(new Blob([bytes], { type: mime }));
   })();
   const config = normalizeConfig(rawConfig);
+  let mediaUrl = null;
+  let mediaTransfer = null;
   let profile = {
     ...defaultProfile,
-    aspect: config.initialAspect ?? defaultProfile.aspect,
+    aspect: config.initialAspect ?? (config.mediaType === "video" ? 16 / 9 : defaultProfile.aspect),
   };
   const existingStyle = document.getElementById(STYLE_ID);
   if (existingStyle) {
@@ -110,7 +134,14 @@
   }
 
   const analyzeArt = () => new Promise((resolve) => {
-    if (typeof Image !== "function") {
+    if (config.mediaType === "video") {
+      resolve({
+        ...defaultProfile,
+        aspect: config.initialAspect ?? 16 / 9,
+      });
+      return;
+    }
+    if (!artUrl || typeof Image !== "function") {
       resolve(defaultProfile);
       return;
     }
@@ -285,6 +316,7 @@
     document.querySelectorAll(`.${HOME_UTILITY_CLASS}`).forEach((node) => node.classList.remove(HOME_UTILITY_CLASS));
     document.getElementById(STYLE_ID)?.remove();
     document.getElementById(CHROME_ID)?.remove();
+    document.getElementById(MEDIA_ID)?.remove();
   };
 
   const applyProfile = (root) => {
@@ -301,6 +333,7 @@
     const accentInk = luminance(...profile.accent) > .42 ? "rgb(26 24 28)" : "rgb(250 248 251)";
     root.classList.toggle("dream-theme-light", appearance === "light");
     root.classList.toggle("dream-theme-dark", appearance === "dark");
+    root.classList.toggle("dream-art-video", config.mediaType === "video");
     root.classList.toggle("dream-art-wide", profile.aspect >= 1.75);
     root.classList.toggle("dream-art-standard", profile.aspect < 1.75);
     for (const value of ["left", "center", "right"]) {
@@ -312,13 +345,96 @@
     for (const value of ["ambient", "banner", "off"]) {
       root.classList.toggle(`dream-task-${value}`, taskMode === value);
     }
-    root.style.setProperty("--dream-art", `url("${artUrl}")`);
+    root.style.setProperty("--dream-art", artUrl ? `url("${artUrl}")` : "none");
     root.style.setProperty("--dream-art-position", `${Math.round(focusX * 100)}% ${Math.round(focusY * 100)}%`);
     root.style.setProperty("--dream-focus-x", String(focusX));
     root.style.setProperty("--dream-focus-y", String(focusY));
     root.style.setProperty("--dream-accent", accent);
     root.style.setProperty("--dream-accent-ink", accentInk);
     root.style.setProperty("--dream-image-luma", profile.luma.toFixed(3));
+  };
+
+  const syncMediaElement = () => {
+    let media = document.getElementById(MEDIA_ID);
+    const shellPresent = Boolean(document.querySelector("main.main-surface"));
+    if (config.mediaType !== "video" || !shellPresent) {
+      media?.remove();
+      return null;
+    }
+    if (!media || media.parentElement !== document.body) {
+      media?.remove();
+      media = document.createElement("video");
+      media.id = MEDIA_ID;
+      media.setAttribute("aria-hidden", "true");
+      media.autoplay = true;
+      media.controls = false;
+      media.disablePictureInPicture = true;
+      media.loop = true;
+      media.muted = true;
+      media.playsInline = true;
+      media.preload = "auto";
+      document.body.appendChild(media);
+    }
+    media.defaultMuted = true;
+    media.muted = true;
+    media.loop = true;
+    media.playbackRate = config.playbackRate;
+    if (mediaUrl && media.src !== mediaUrl) {
+      media.src = mediaUrl;
+      media.load?.();
+    }
+    if (!mediaUrl || document.hidden) {
+      media.pause?.();
+    } else {
+      const playback = media.play?.();
+      playback?.catch?.(() => {});
+    }
+    return media;
+  };
+
+  const beginMedia = ({ mime, size } = {}) => {
+    if (config.mediaType !== "video" || mime !== config.mediaMime ||
+        !Number.isSafeInteger(size) || size !== config.mediaSize) return false;
+    mediaTransfer = { chunks: [], received: 0, expected: size, mime };
+    if (mediaUrl) URL.revokeObjectURL(mediaUrl);
+    mediaUrl = null;
+    const media = syncMediaElement();
+    if (media) {
+      media.pause?.();
+      media.removeAttribute?.("src");
+      media.load?.();
+    }
+    const state = window[STATE_KEY];
+    if (state?.installToken === installToken) state.mediaUrl = null;
+    return true;
+  };
+
+  const appendMedia = (encoded) => {
+    if (!mediaTransfer || typeof encoded !== "string" || encoded.length > 1024 * 1024) return false;
+    let binary;
+    try {
+      binary = atob(encoded);
+    } catch {
+      return false;
+    }
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+    if (mediaTransfer.received + bytes.length > mediaTransfer.expected) return false;
+    mediaTransfer.chunks.push(bytes);
+    mediaTransfer.received += bytes.length;
+    return true;
+  };
+
+  const commitMedia = () => {
+    if (!mediaTransfer || mediaTransfer.received !== mediaTransfer.expected) return false;
+    const nextUrl = URL.createObjectURL(new Blob(mediaTransfer.chunks, { type: mediaTransfer.mime }));
+    mediaTransfer = null;
+    if (mediaUrl) URL.revokeObjectURL(mediaUrl);
+    mediaUrl = nextUrl;
+    const state = window[STATE_KEY];
+    if (state?.installToken === installToken) state.mediaUrl = mediaUrl;
+    syncMediaElement();
+    return true;
   };
 
   const ensure = () => {
@@ -369,6 +485,7 @@
       document.body.appendChild(chrome);
     }
     chrome.classList.toggle("dream-home-shell", Boolean(home));
+    syncMediaElement();
   };
 
   const cleanup = () => {
@@ -380,6 +497,10 @@
     if (state?.timer) clearInterval(state.timer);
     if (state?.scheduler?.timeout) clearTimeout(state.scheduler.timeout);
     if (state?.artUrl) URL.revokeObjectURL(state.artUrl);
+    if (state?.mediaUrl) URL.revokeObjectURL(state.mediaUrl);
+    if (state?.visibilityHandler) {
+      document.removeEventListener?.("visibilitychange", state.visibilityHandler);
+    }
     delete window[STATE_KEY];
     return true;
   };
@@ -403,8 +524,11 @@
     attributeFilter: ["class", "data-theme", "data-appearance", "data-color-mode"],
   });
   const timer = setInterval(ensure, 5000);
+  const visibilityHandler = () => syncMediaElement();
+  document.addEventListener?.("visibilitychange", visibilityHandler);
   window[STATE_KEY] = {
-    ensure, cleanup, observer, timer, scheduler, artUrl, profile, config, installToken, version: "1.2.0",
+    ensure, cleanup, observer, timer, scheduler, artUrl, mediaUrl, beginMedia, appendMedia, commitMedia,
+    visibilityHandler, profile, config, installToken, version: "1.2.0",
   };
   ensure();
   analyzeArt().then((result) => {
@@ -414,5 +538,5 @@
     state.profile = result;
     ensure();
   });
-  return { installed: true, version: "1.2.0", adaptive: true };
+  return { installed: true, version: "1.2.0", adaptive: true, mediaType: config.mediaType };
 })(__DREAM_CSS_JSON__, __DREAM_ART_JSON__, __DREAM_THEME_JSON__)

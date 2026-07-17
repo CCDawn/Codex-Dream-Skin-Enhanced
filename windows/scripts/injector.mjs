@@ -9,6 +9,8 @@ const here = path.dirname(scriptPath);
 const root = path.resolve(here, "..");
 const SKIN_VERSION = "1.2.0";
 const MAX_ART_BYTES = 16 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 128 * 1024 * 1024;
+const VIDEO_CHUNK_BYTES = 512 * 1024;
 const STRONG_THEME_AUDIT_MS = 30000;
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]", "::1"]);
 const BROWSER_ID_PATTERN = /^[A-Za-z0-9._-]{1,200}$/;
@@ -304,6 +306,25 @@ function normalizedText(value, name, fallback, maxLength = 120) {
   return value;
 }
 
+async function readVideoSignature(videoPath, extension) {
+  const handle = await fs.open(videoPath, "r");
+  try {
+    const buffer = Buffer.alloc(64);
+    const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
+    const header = buffer.subarray(0, bytesRead);
+    if (extension === ".mp4" && header.length >= 12 && header.toString("ascii", 4, 8) === "ftyp") {
+      return "video/mp4";
+    }
+    if (extension === ".webm" && header.length >= 4 &&
+        header[0] === 0x1a && header[1] === 0x45 && header[2] === 0xdf && header[3] === 0xa3) {
+      return "video/webm";
+    }
+    throw new Error(`Video container signature does not match ${extension}`);
+  } finally {
+    await handle.close();
+  }
+}
+
 async function loadTheme(themeDir) {
   const realThemeDir = await fs.realpath(themeDir);
   const themePath = path.join(realThemeDir, "theme.json");
@@ -312,29 +333,48 @@ async function loadTheme(themeDir) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     throw new Error("Theme root must be an object");
   }
-  const image = normalizedText(raw.image, "image", null, 240);
-  if (!image || path.isAbsolute(image)) throw new Error("Theme image must be a relative path");
-  const imagePath = path.resolve(realThemeDir, image);
-  const relativeImage = path.relative(realThemeDir, imagePath);
-  if (!relativeImage || relativeImage.startsWith("..") || path.isAbsolute(relativeImage)) {
-    throw new Error("Theme image must remain inside the selected theme directory");
+  const mediaFile = normalizedText(raw.image, "image", null, 240);
+  if (!mediaFile || path.isAbsolute(mediaFile)) throw new Error("Theme media must be a relative path");
+  const mediaPath = path.resolve(realThemeDir, mediaFile);
+  const relativeMedia = path.relative(realThemeDir, mediaPath);
+  if (!relativeMedia || relativeMedia.startsWith("..") || path.isAbsolute(relativeMedia)) {
+    throw new Error("Theme media must remain inside the selected theme directory");
   }
-  const extension = path.extname(imagePath).toLowerCase();
-  if (![".png", ".jpg", ".jpeg", ".webp"].includes(extension)) {
-    throw new Error(`Unsupported theme image format: ${extension || "missing"}`);
+  const extension = path.extname(mediaPath).toLowerCase();
+  const imageExtensions = new Set([".png", ".jpg", ".jpeg", ".webp"]);
+  const videoExtensions = new Set([".mp4", ".webm"]);
+  if (!imageExtensions.has(extension) && !videoExtensions.has(extension)) {
+    throw new Error(`Unsupported theme media format: ${extension || "missing"}`);
   }
-  const realImagePath = await fs.realpath(imagePath);
-  const realRelativeImage = path.relative(realThemeDir, realImagePath);
-  if (!realRelativeImage || realRelativeImage.startsWith("..") || path.isAbsolute(realRelativeImage)) {
-    throw new Error("Theme image cannot escape through a link or junction");
+  const realMediaPath = await fs.realpath(mediaPath);
+  const realRelativeMedia = path.relative(realThemeDir, realMediaPath);
+  if (!realRelativeMedia || realRelativeMedia.startsWith("..") || path.isAbsolute(realRelativeMedia)) {
+    throw new Error("Theme media cannot escape through a link or junction");
   }
   const art = raw.art && typeof raw.art === "object" && !Array.isArray(raw.art) ? raw.art : {};
   const palette = raw.palette && typeof raw.palette === "object" && !Array.isArray(raw.palette)
     ? raw.palette : {};
+  const rawMedia = raw.media && typeof raw.media === "object" && !Array.isArray(raw.media)
+    ? raw.media : {};
+  const inferredMediaType = videoExtensions.has(extension) ? "video" : "image";
+  const requestedMediaType = normalizedChoice(
+    rawMedia.type,
+    "media.type",
+    new Set(["image", "video"]),
+    inferredMediaType,
+  );
+  if (requestedMediaType !== inferredMediaType) {
+    throw new Error(`Theme media type ${requestedMediaType} does not match ${extension}`);
+  }
+  const playbackRate = rawMedia.playbackRate === null || rawMedia.playbackRate === undefined
+    ? 1 : Number(rawMedia.playbackRate);
+  if (!Number.isFinite(playbackRate) || playbackRate < 0.25 || playbackRate > 2) {
+    throw new Error("media.playbackRate must be between 0.25 and 2");
+  }
   const theme = {
     id: normalizedText(raw.id, "id", "custom", 80),
     name: normalizedText(raw.name, "name", "Codex Dream Skin", 120),
-    image,
+    image: mediaFile,
     appearance: normalizedChoice(raw.appearance, "appearance", THEME_CHOICES.appearance, "auto"),
     art: {
       focusX: normalizedUnit(art.focusX, "art.focusX"),
@@ -343,6 +383,10 @@ async function loadTheme(themeDir) {
       taskMode: normalizedChoice(art.taskMode, "art.taskMode", THEME_CHOICES.taskMode, "auto"),
     },
     palette: {},
+    media: {
+      type: inferredMediaType,
+      playbackRate,
+    },
   };
   if (typeof palette.accent === "string" && palette.accent.trim()) {
     const accent = palette.accent.trim();
@@ -351,33 +395,53 @@ async function loadTheme(themeDir) {
     }
     theme.palette.accent = accent;
   }
-  const [themeStat, imageStat] = await Promise.all([fs.stat(themePath), fs.stat(realImagePath)]);
-  if (!imageStat.isFile()) throw new Error("Theme image is not a file");
-  if (imageStat.size < 1) throw new Error("Theme image cannot be empty");
-  if (imageStat.size > MAX_ART_BYTES) {
-    throw new Error(`Theme image exceeds the ${MAX_ART_BYTES / 1024 / 1024} MB limit`);
+  const [themeStat, mediaStat] = await Promise.all([fs.stat(themePath), fs.stat(realMediaPath)]);
+  if (!mediaStat.isFile()) throw new Error("Theme media is not a file");
+  if (mediaStat.size < 1) throw new Error("Theme media cannot be empty");
+  const fingerprintHash = createHash("sha256").update(themeText, "utf8").update("\0");
+  let mediaBytes = null;
+  let mediaMime = null;
+  if (inferredMediaType === "image") {
+    if (mediaStat.size > MAX_ART_BYTES) {
+      throw new Error(`Theme image exceeds the ${MAX_ART_BYTES / 1024 / 1024} MB limit`);
+    }
+    mediaBytes = await fs.readFile(realMediaPath);
+    if (mediaBytes.length < 1 || mediaBytes.length > MAX_ART_BYTES) {
+      throw new Error(`Theme image must be between 1 byte and ${MAX_ART_BYTES / 1024 / 1024} MB`);
+    }
+    const artMetadata = readImageMetadata(mediaBytes, extension);
+    if (!artMetadata) {
+      throw new Error("Theme image metadata is invalid or exceeds the 16384px / 50MP safety limit");
+    }
+    theme.artMetadata = artMetadata;
+    mediaMime = extension === ".jpg" || extension === ".jpeg" ? "image/jpeg"
+      : extension === ".webp" ? "image/webp" : "image/png";
+    fingerprintHash.update(mediaBytes);
+  } else {
+    if (mediaStat.size > MAX_VIDEO_BYTES) {
+      throw new Error(`Theme video exceeds the ${MAX_VIDEO_BYTES / 1024 / 1024} MB limit`);
+    }
+    mediaMime = await readVideoSignature(realMediaPath, extension);
+    theme.artMetadata = { ratio: 16 / 9 };
+    fingerprintHash
+      .update(String(mediaStat.size))
+      .update("\0")
+      .update(String(mediaStat.mtimeMs));
   }
-  const imageBytes = await fs.readFile(realImagePath);
-  if (imageBytes.length < 1 || imageBytes.length > MAX_ART_BYTES) {
-    throw new Error(`Theme image must be between 1 byte and ${MAX_ART_BYTES / 1024 / 1024} MB`);
-  }
-  const artMetadata = readImageMetadata(imageBytes, extension);
-  if (!artMetadata) {
-    throw new Error("Theme image metadata is invalid or exceeds the 16384px / 50MP safety limit");
-  }
-  theme.artMetadata = artMetadata;
-  const fingerprint = createHash("sha256")
-    .update(themeText, "utf8")
-    .update("\0")
-    .update(imageBytes)
-    .digest("hex");
+  theme.media.mime = mediaMime;
+  theme.media.size = mediaStat.size;
+  const fingerprint = fingerprintHash.digest("hex");
   return {
     theme,
     themePath,
-    imagePath: realImagePath,
-    imageBytes,
+    imagePath: realMediaPath,
+    mediaPath: realMediaPath,
+    mediaBytes,
+    mediaMime,
+    mediaSize: mediaStat.size,
+    mediaType: inferredMediaType,
     fingerprint,
-    sourceStamp: `${themeStat.size}:${themeStat.mtimeMs}:${imageStat.size}:${imageStat.mtimeMs}`,
+    sourceStamp: `${themeStat.size}:${themeStat.mtimeMs}:${mediaStat.size}:${mediaStat.mtimeMs}`,
   };
 }
 
@@ -387,15 +451,14 @@ async function loadPayload(themeDir = path.join(root, "assets"), candidateTheme 
     fs.readFile(path.join(root, "assets", "dream-skin.css"), "utf8"),
     fs.readFile(path.join(root, "assets", "renderer-inject.js"), "utf8"),
   ]);
-  const extension = path.extname(loadedTheme.imagePath).toLowerCase();
-  const mime = extension === ".jpg" || extension === ".jpeg" ? "image/jpeg"
-    : extension === ".webp" ? "image/webp" : "image/png";
-  const artDataUrl = `data:${mime};base64,${loadedTheme.imageBytes.toString("base64")}`;
+  const artDataUrl = loadedTheme.mediaType === "image"
+    ? `data:${loadedTheme.mediaMime};base64,${loadedTheme.mediaBytes.toString("base64")}`
+    : "";
   const payload = template
     .replace("__DREAM_CSS_JSON__", JSON.stringify(css))
     .replace("__DREAM_ART_JSON__", JSON.stringify(artDataUrl))
     .replace("__DREAM_THEME_JSON__", JSON.stringify(loadedTheme.theme));
-  const { imageBytes: _imageBytes, ...themeState } = loadedTheme;
+  const { mediaBytes: _mediaBytes, ...themeState } = loadedTheme;
   return { ...themeState, payload };
 }
 
@@ -412,7 +475,7 @@ async function fileExists(filePath) {
 async function readThemeSourceStamp(loadedTheme) {
   const [themeStat, imageStat] = await Promise.all([
     fs.stat(loadedTheme.themePath),
-    fs.stat(loadedTheme.imagePath),
+    fs.stat(loadedTheme.mediaPath),
   ]);
   return `${themeStat.size}:${themeStat.mtimeMs}:${imageStat.size}:${imageStat.mtimeMs}`;
 }
@@ -481,8 +544,63 @@ async function connectCodexTargets(port, timeoutMs, expectedBrowserId) {
   throw new Error(`No verified Codex renderer on 127.0.0.1:${port}: ${lastError?.message ?? "timed out"}`);
 }
 
-async function applyToSession(session, payload) {
-  return session.evaluate(payload);
+export async function transferVideoToSession(session, loadedPayload) {
+  if (!loadedPayload?.mediaPath ||
+      (loadedPayload.mediaType && loadedPayload.mediaType !== "video")) {
+    throw new Error("Video transfer requires a loaded video theme");
+  }
+  const mediaPath = loadedPayload.mediaPath;
+  const mediaMime = loadedPayload.mediaMime;
+  const mediaSize = loadedPayload.mediaSize;
+  if (!["video/mp4", "video/webm"].includes(mediaMime) ||
+      !Number.isSafeInteger(mediaSize) || mediaSize < 1 || mediaSize > MAX_VIDEO_BYTES) {
+    throw new Error("Video transfer metadata is invalid");
+  }
+  const stat = await fs.stat(mediaPath);
+  if (!stat.isFile() || stat.size !== mediaSize) {
+    throw new Error("Theme video changed before transfer completed");
+  }
+  const stateExpression = "window.__CODEX_DREAM_SKIN_STATE__";
+  const began = await session.evaluate(
+    `${stateExpression}?.beginMedia(${JSON.stringify({ mime: mediaMime, size: mediaSize })}) === true`,
+  );
+  if (!began) throw new Error("Renderer rejected the video transfer");
+  const handle = await fs.open(mediaPath, "r");
+  let offset = 0;
+  let chunks = 0;
+  try {
+    const buffer = Buffer.alloc(VIDEO_CHUNK_BYTES);
+    while (offset < mediaSize) {
+      const length = Math.min(buffer.length, mediaSize - offset);
+      const { bytesRead } = await handle.read(buffer, 0, length, offset);
+      if (bytesRead < 1) throw new Error("Theme video ended during transfer");
+      const encoded = buffer.subarray(0, bytesRead).toString("base64");
+      const accepted = await session.evaluate(
+        `${stateExpression}?.appendMedia(${JSON.stringify(encoded)}) === true`,
+      );
+      if (!accepted) throw new Error("Renderer rejected a video transfer chunk");
+      offset += bytesRead;
+      chunks += 1;
+    }
+  } finally {
+    await handle.close();
+  }
+  const completedStat = await fs.stat(mediaPath);
+  if (!completedStat.isFile() || completedStat.size !== stat.size ||
+      completedStat.mtimeMs !== stat.mtimeMs) {
+    throw new Error("Theme video changed during transfer");
+  }
+  const committed = await session.evaluate(`${stateExpression}?.commitMedia() === true`);
+  if (!committed) throw new Error("Renderer rejected the completed video transfer");
+  return { bytes: offset, chunks };
+}
+
+async function applyToSession(session, loadedPayload) {
+  const result = await session.evaluate(loadedPayload.payload);
+  if (loadedPayload.mediaType === "video") {
+    await transferVideoToSession(session, loadedPayload);
+  }
+  return result;
 }
 
 export function earlyPayloadFor(payload, revision) {
@@ -538,7 +656,7 @@ async function removeFromSession(session) {
     const state = window.__CODEX_DREAM_SKIN_STATE__;
     if (state?.cleanup) return state.cleanup();
     document.documentElement?.classList.remove(
-      'codex-dream-skin', 'dream-theme-light', 'dream-theme-dark',
+      'codex-dream-skin', 'dream-theme-light', 'dream-theme-dark', 'dream-art-video',
       'dream-art-wide', 'dream-art-standard', 'dream-focus-left',
       'dream-focus-center', 'dream-focus-right', 'dream-safe-left',
       'dream-safe-center', 'dream-safe-right', 'dream-safe-none',
@@ -553,6 +671,7 @@ async function removeFromSession(session) {
     document.querySelectorAll('.dream-home-shell').forEach((node) => node.classList.remove('dream-home-shell'));
     document.getElementById('codex-dream-skin-style')?.remove();
     document.getElementById('codex-dream-skin-chrome')?.remove();
+    document.getElementById('codex-dream-skin-media')?.remove();
     delete window.__CODEX_DREAM_SKIN_STATE__;
     return true;
   })()`);
@@ -567,6 +686,7 @@ async function verifyRemovedSession(session) {
     !document.querySelector('.dream-home-shell') &&
     !document.getElementById('codex-dream-skin-style') &&
     !document.getElementById('codex-dream-skin-chrome') &&
+    !document.getElementById('codex-dream-skin-media') &&
     !window.__CODEX_DREAM_SKIN_STATE__
   )()`);
 }
@@ -588,6 +708,9 @@ async function verifySession(session) {
       stylePresent: Boolean(document.getElementById('codex-dream-skin-style')),
       chromePresent: Boolean(document.getElementById('codex-dream-skin-chrome')),
       chromePointerEvents: getComputedStyle(document.getElementById('codex-dream-skin-chrome') || document.body).pointerEvents,
+      mediaType: window.__CODEX_DREAM_SKIN_STATE__?.config?.mediaType ?? 'image',
+      mediaPresent: Boolean(document.getElementById('codex-dream-skin-media')),
+      mediaReady: Boolean(window.__CODEX_DREAM_SKIN_STATE__?.mediaUrl),
       homePresent: Boolean(home),
       suggestionsPresent: Boolean(suggestions),
       hero: box(home?.firstElementChild?.firstElementChild?.firstElementChild),
@@ -603,6 +726,7 @@ async function verifySession(session) {
     result.pass = result.installed && result.version === result.expectedVersion &&
       result.stylePresent && result.chromePresent &&
       result.chromePointerEvents === 'none' && Boolean(result.composer) && Boolean(result.sidebar) &&
+      (result.mediaType !== 'video' || (result.mediaPresent && result.mediaReady)) &&
       (!result.homePresent || (Boolean(result.hero) &&
         (!result.suggestionsPresent || (result.cards.length >= 2 && result.cards.length <= 4))));
     return result;
@@ -651,21 +775,20 @@ async function runOneShot(options) {
   const connected = await connectCodexTargets(options.port, options.timeoutMs, options.browserId);
   const loadedPayload = (options.mode === "once" || options.reload)
     ? await loadPayload(options.themeDir) : null;
-  const payload = loadedPayload?.payload ?? null;
   const results = [];
   let screenshotCaptured = false;
   try {
     for (const { target, session, probe } of connected) {
       try {
         if (options.mode === "remove") await removeFromSession(session);
-        else if (options.mode === "once") await applyToSession(session, payload);
+        else if (options.mode === "once") await applyToSession(session, loadedPayload);
         if (options.mode === "once") {
           await new Promise((resolve) => setTimeout(resolve, 850));
         }
         if (options.reload) {
           await session.send("Page.reload", { ignoreCache: true });
           await new Promise((resolve) => setTimeout(resolve, 1600));
-          if (options.mode !== "remove") await applyToSession(session, payload);
+          if (options.mode !== "remove") await applyToSession(session, loadedPayload);
         }
         const verified = options.mode === "remove"
           ? await verifyRemovedSession(session)
@@ -721,9 +844,9 @@ async function runWatch(options) {
     fallbackListeners.add(id);
     let lastReinjectErrorLogAt = 0;
     session.on("Page.loadEventFired", () => {
-      if (!fallbackTargets.get(id)) return;
+      if (!fallbackTargets.get(id) && loadedPayload?.mediaType !== "video") return;
       setTimeout(() => {
-        const operation = paused ? removeFromSession(session) : applyToSession(session, loadedPayload.payload);
+        const operation = paused ? removeFromSession(session) : applyToSession(session, loadedPayload);
         operation.catch((error) => {
           if (Date.now() - lastReinjectErrorLogAt >= 30000) {
             console.error(`[dream-skin] reinject failed for ${target.id}: ${error.message}`);
@@ -804,7 +927,6 @@ async function runWatch(options) {
               await removeEarlyPayload(session, previousEarlyScript);
               earlyScripts.delete(id);
               fallbackTargets.delete(id);
-              fallbackListeners.delete(id);
             } else {
               let nextEarlyScript = null;
               try {
@@ -823,7 +945,10 @@ async function runWatch(options) {
               if (nextEarlyScript) earlyScripts.set(id, nextEarlyScript);
               else earlyScripts.delete(id);
               await removeEarlyPayload(session, previousEarlyScript);
-              await applyToSession(session, loadedPayload.payload);
+              if (loadedPayload.mediaType === "video") {
+                attachLoadFallback(id, { id }, session);
+              }
+              await applyToSession(session, loadedPayload);
             }
           } catch (error) {
             console.error(`[dream-skin] live theme update failed for ${id}: ${error.message}`);
@@ -888,7 +1013,9 @@ async function runWatch(options) {
             continue;
           }
           fallbackTargets.set(target.id, earlyInjectionFallback);
-          if (earlyInjectionFallback) attachLoadFallback(target.id, target, session);
+          if (earlyInjectionFallback || loadedPayload.mediaType === "video") {
+            attachLoadFallback(target.id, target, session);
+          }
           if (identityAnchor.closed) throw new CdpIdentityMismatchError("Original CDP browser identity closed");
           let earlyApplied = false;
           if (!paused && !earlyInjectionFallback) {
@@ -897,7 +1024,9 @@ async function runWatch(options) {
             ).catch(() => false);
           }
           if (paused) await removeFromSession(session);
-          else if (!earlyApplied) await applyToSession(session, loadedPayload.payload);
+          else if (!earlyApplied || loadedPayload.mediaType === "video") {
+            await applyToSession(session, loadedPayload);
+          }
           sessions.set(target.id, session);
           if (earlyScriptId) earlyScripts.set(target.id, earlyScriptId);
           targetFailures.delete(target.id);
@@ -987,6 +1116,7 @@ if (path.resolve(process.argv[1] || "") === path.resolve(scriptPath)) {
       appearance: loaded.theme.appearance,
       art: loaded.theme.art,
       artMetadata: loaded.theme.artMetadata ?? null,
+      media: loaded.theme.media,
     }));
   } else if (options.mode === "watch") await runWatch(options);
   else await runOneShot(options);

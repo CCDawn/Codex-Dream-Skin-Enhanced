@@ -647,6 +647,38 @@ try {
   }
   $null = Use-DreamSkinSavedTheme -ThemeDirectory $savedTheme.Directory -StateRoot $themeStateRoot
 
+  $videoFixture = Join-Path $temporaryRoot 'loop.mp4'
+  $videoBytes = New-Object byte[] 1024
+  $videoBytes[0] = 0; $videoBytes[1] = 0; $videoBytes[2] = 0; $videoBytes[3] = 24
+  [System.Text.Encoding]::ASCII.GetBytes('ftypisom') | ForEach-Object -Begin { $i = 4 } -Process {
+    $videoBytes[$i++] = $_
+  }
+  [System.IO.File]::WriteAllBytes($videoFixture, $videoBytes)
+  $videoTheme = Set-DreamSkinActiveTheme -ImagePath $videoFixture -Theme $null `
+    -Name '动态测试主题' -StateRoot $themeStateRoot
+  if ($videoTheme.Theme.media.type -cne 'video' -or
+    [System.IO.Path]::GetExtension($videoTheme.ImagePath) -cne '.mp4' -or
+    -not (Test-DreamSkinThemePathWithin -Path $videoTheme.ImagePath -Root $themePaths.Active)) {
+    throw 'Imported video did not become a managed dynamic theme.'
+  }
+  $savedVideoTheme = Save-DreamSkinCurrentTheme -Name '已保存动态主题' -StateRoot $themeStateRoot
+  if ($savedVideoTheme.Theme.media.type -cne 'video' -or
+    @(Get-DreamSkinSavedThemes -StateRoot $themeStateRoot).Count -ne 3) {
+    throw 'Dynamic theme save or discovery failed.'
+  }
+  $restoredVideoTheme = Use-DreamSkinSavedTheme -ThemeDirectory $savedVideoTheme.Directory `
+    -StateRoot $themeStateRoot
+  if ($restoredVideoTheme.Theme.media.type -cne 'video') {
+    throw 'Saved dynamic theme did not preserve its media contract.'
+  }
+  $fakeVideo = Join-Path $temporaryRoot 'fake.mp4'
+  [System.IO.File]::WriteAllText($fakeVideo, 'not an mp4')
+  $fakeVideoRejected = $false
+  try {
+    $null = Set-DreamSkinActiveTheme -ImagePath $fakeVideo -Theme $null -StateRoot $themeStateRoot
+  } catch { $fakeVideoRejected = $true }
+  if (-not $fakeVideoRejected) { throw 'A file with a forged MP4 extension was imported as a dynamic theme.' }
+
   $outsideTheme = Join-Path $temporaryRoot 'outside-theme'
   New-Item -ItemType Directory -Path $outsideTheme | Out-Null
   Copy-Item -LiteralPath (Join-Path $Root 'assets\dream-reference.jpg') `
@@ -723,7 +755,7 @@ try {
     if (-not $css.Contains($requiredCss)) { throw "Windows immersive CSS is missing: $requiredCss" }
   }
   $traySource = Read-DreamSkinUtf8File -Path (Join-Path $Root 'scripts\tray-dream-skin.ps1')
-  foreach ($requiredTrayAction in @('System.Windows.Forms.NotifyIcon', '暂停皮肤', '更换背景图', '已保存主题', '完全恢复 Codex')) {
+  foreach ($requiredTrayAction in @('System.Windows.Forms.NotifyIcon', '暂停皮肤', '更换背景图或视频', '*.mp4;*.webm', '已保存主题', '完全恢复 Codex')) {
     if (-not $traySource.Contains($requiredTrayAction)) { throw "Tray action is missing: $requiredTrayAction" }
   }
   if (-not $traySource.Contains('[AllowEmptyCollection()][System.Windows.Forms.ToolStripItemCollection]$Items')) {
@@ -787,8 +819,10 @@ try {
     'Ensure-DreamSkinManagedDirectory',
     'Get-DreamSkinValidatedImageMetadata',
     '16384px / 50MP safety limit',
-    'Assert-DreamSkinImageFile -Path $temporary',
-    'Assert-DreamSkinImageFile -Path $imageArchive'
+    'Assert-DreamSkinVideoFile',
+    'Video container signature does not match',
+    'Assert-DreamSkinMediaFile -Path $temporary',
+    'Assert-DreamSkinMediaFile -Path $imageArchive'
   )) {
     if (-not $themeSource.Contains($requiredThemeSafety)) {
       throw "PowerShell theme-store safety is missing: $requiredThemeSafety"
@@ -826,6 +860,9 @@ try {
   $rendererTest = Invoke-DreamSkinNative -FilePath $node.Path -ArgumentList @(
     (Join-Path $PSScriptRoot 'renderer-inject.test.mjs'))
   if ($rendererTest.ExitCode -ne 0) { throw 'Renderer auxiliary-window regression test failed.' }
+  $dynamicMediaTest = Invoke-DreamSkinNative -FilePath $node.Path -ArgumentList @(
+    (Join-Path $PSScriptRoot 'dynamic-media.test.mjs'))
+  if ($dynamicMediaTest.ExitCode -ne 0) { throw 'Dynamic media transfer regression test failed.' }
   $bootstrapTest = Invoke-DreamSkinNative -FilePath $node.Path -ArgumentList @(
     (Join-Path $PSScriptRoot 'injector-bootstrap.test.mjs'))
   if ($bootstrapTest.ExitCode -ne 0) { throw 'Injector early-bootstrap regression test failed.' }

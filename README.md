@@ -73,7 +73,7 @@ powershell -ExecutionPolicy Bypass -File .\windows\scripts\install-dream-skin.ps
 powershell -ExecutionPolicy Bypass -File .\windows\scripts\start-dream-skin.ps1
 ```
 
-启动后可直接从「已保存主题 → 桥本有菜」切换；不需要跨目录手动导入。托盘里的「更换背景图」仍可导入你自己的纯背景，保存后继续一键切换。
+启动后可直接从「已保存主题 → 桥本有菜」切换；不需要跨目录手动导入。增强版托盘里的「更换背景图或视频」支持 PNG/JPEG/WebP 与静音循环的 MP4/WebM，保存后可继续一键切换。
 
 > 可下载的用户源图是 [`docs/images/presets/romantic-rose-source.png`](./docs/images/presets/romantic-rose-source.png)（`1672 × 941`）；macOS 一键预设使用 [`macos/presets/preset-romantic-rose/background.jpg`](./macos/presets/preset-romantic-rose/background.jpg)（规范化派生 `2560 × 1440`）。上面两个效果图包含真实 UI，**只作预览，绝不能当背景导入**。背景为用户提供的 AI 生成示例，不代表 OpenAI/Codex 官方视觉或背书；公开再分发前请确认人物与素材权利。
 
@@ -126,6 +126,7 @@ powershell -ExecutionPolicy Bypass -File .\windows\scripts\start-dream-skin.ps1
 - **真·可交互**：侧栏、建议卡、项目选择、输入框都是原生控件，不是整窗假截图贴上去
 - **真背景层**：一张 16:9 纯壁纸连续铺满整窗，首页突出氛围，任务页自动降低干扰
 - **可换图**：换一张喜欢的纯背景，自适应焦点、安全区和配色后变成你的主题
+- **可播视频**：Windows 增强版支持本地 MP4/WebM 静音循环动态壁纸，页面隐藏时自动暂停
 - **可存主题**：macOS 菜单栏与 Windows 系统托盘都能保存/切换本地主题
 - **可恢复**：一键还原官方外观
 - **相对安全**：本机回环 CDP 注入，不改官方二进制与签名

@@ -3,6 +3,7 @@
 }
 
 $script:DreamSkinMaxImageBytes = 16 * 1024 * 1024
+$script:DreamSkinMaxVideoBytes = 128 * 1024 * 1024
 
 function Assert-DreamSkinNoReparseComponents {
   param([Parameter(Mandatory = $true)][string]$Path)
@@ -89,6 +90,60 @@ function Assert-DreamSkinImageFile {
   }
 }
 
+function Assert-DreamSkinVideoFile {
+  param([Parameter(Mandatory = $true)][string]$Path)
+  $fullPath = [System.IO.Path]::GetFullPath($Path)
+  if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) {
+    throw "Video does not exist: $fullPath"
+  }
+  $extension = [System.IO.Path]::GetExtension($fullPath).ToLowerInvariant()
+  if ($extension -notin @('.mp4', '.webm')) {
+    throw "Unsupported video format: $extension"
+  }
+  $length = (Get-Item -LiteralPath $fullPath -Force).Length
+  if ($length -lt 1) { throw 'Theme video cannot be empty.' }
+  if ($length -gt $script:DreamSkinMaxVideoBytes) {
+    throw 'Theme video exceeds the 128 MB limit.'
+  }
+  $header = New-Object byte[] 12
+  $stream = [System.IO.File]::Open(
+    $fullPath,
+    [System.IO.FileMode]::Open,
+    [System.IO.FileAccess]::Read,
+    [System.IO.FileShare]::Read
+  )
+  try { $read = $stream.Read($header, 0, $header.Length) } finally { $stream.Dispose() }
+  $valid = if ($extension -ceq '.mp4') {
+    $read -ge 12 -and [System.Text.Encoding]::ASCII.GetString($header, 4, 4) -ceq 'ftyp'
+  } else {
+    $read -ge 4 -and $header[0] -eq 0x1a -and $header[1] -eq 0x45 -and
+      $header[2] -eq 0xdf -and $header[3] -eq 0xa3
+  }
+  if (-not $valid) { throw "Video container signature does not match $extension" }
+}
+
+function Get-DreamSkinMediaType {
+  param([Parameter(Mandatory = $true)][string]$Path)
+  $extension = [System.IO.Path]::GetExtension($Path).ToLowerInvariant()
+  if ($extension -in @('.png', '.jpg', '.jpeg', '.webp')) { return 'image' }
+  if ($extension -in @('.mp4', '.webm')) { return 'video' }
+  throw "Unsupported theme media format: $extension"
+}
+
+function Assert-DreamSkinMediaFile {
+  param(
+    [Parameter(Mandatory = $true)][string]$Path,
+    [switch]$SkipImageMetadata
+  )
+  $mediaType = Get-DreamSkinMediaType -Path $Path
+  if ($mediaType -ceq 'video') {
+    Assert-DreamSkinVideoFile -Path $Path
+  } else {
+    Assert-DreamSkinImageFile -Path $Path -SkipImageMetadata:$SkipImageMetadata
+  }
+  return $mediaType
+}
+
 function Get-DreamSkinThemePaths {
   param([string]$StateRoot = (Join-Path $env:LOCALAPPDATA 'CodexDreamSkin'))
   $fullRoot = [System.IO.Path]::GetFullPath($StateRoot)
@@ -151,20 +206,25 @@ function Read-DreamSkinTheme {
     throw "Theme metadata is invalid JSON: $themePath"
   }
   if ($null -eq $theme -or $theme -is [string] -or $theme -is [array] -or -not $theme.image) {
-    throw "Theme metadata must be an object with a relative image path: $themePath"
+    throw "Theme metadata must be an object with a relative media path: $themePath"
   }
-  $image = "$($theme.image)"
-  if ([System.IO.Path]::IsPathRooted($image)) { throw 'Theme image path must be relative.' }
-  $imagePath = [System.IO.Path]::GetFullPath((Join-Path $directory $image))
-  if (-not (Test-DreamSkinThemePathWithin -Path $imagePath -Root $directory) -or
-    -not (Test-Path -LiteralPath $imagePath -PathType Leaf)) {
-    throw 'Theme image must remain inside its theme directory and exist.'
+  $media = "$($theme.image)"
+  if ([System.IO.Path]::IsPathRooted($media)) { throw 'Theme media path must be relative.' }
+  $mediaPath = [System.IO.Path]::GetFullPath((Join-Path $directory $media))
+  if (-not (Test-DreamSkinThemePathWithin -Path $mediaPath -Root $directory) -or
+    -not (Test-Path -LiteralPath $mediaPath -PathType Leaf)) {
+    throw 'Theme media must remain inside its theme directory and exist.'
   }
-  Assert-DreamSkinImageFile -Path $imagePath -SkipImageMetadata:$SkipImageMetadata
+  $mediaType = Assert-DreamSkinMediaFile -Path $mediaPath -SkipImageMetadata:$SkipImageMetadata
+  if ($theme.media -and $theme.media.type -and "$($theme.media.type)" -cne $mediaType) {
+    throw "Theme media type does not match its file extension: $mediaPath"
+  }
   return [pscustomobject]@{
     Directory = $directory
     ThemePath = $themePath
-    ImagePath = $imagePath
+    ImagePath = $mediaPath
+    MediaPath = $mediaPath
+    MediaType = $mediaType
     Theme = $theme
   }
 }
@@ -251,7 +311,7 @@ function Set-DreamSkinActiveTheme {
   Ensure-DreamSkinManagedDirectory -Path $paths.Active -Root $paths.Root
   Ensure-DreamSkinManagedDirectory -Path $paths.Images -Root $paths.Root
   $source = [System.IO.Path]::GetFullPath($ImagePath)
-  Assert-DreamSkinImageFile -Path $source
+  $mediaType = Assert-DreamSkinMediaFile -Path $source
   $extension = [System.IO.Path]::GetExtension($source).ToLowerInvariant()
   $oldImage = $null
   try { $oldImage = (Read-DreamSkinTheme -ThemeDirectory $paths.Active).ImagePath } catch {}
@@ -262,6 +322,7 @@ function Set-DreamSkinActiveTheme {
       appearance = 'auto'
       art = [pscustomobject]@{ focusX = $null; focusY = $null; safeArea = 'auto'; taskMode = 'auto' }
       palette = [pscustomobject]@{}
+      media = [pscustomobject]@{ type = $mediaType; playbackRate = 1 }
     }
   }
   $imageName = New-DreamSkinThemeImageName -Extension $extension
@@ -272,11 +333,15 @@ function Set-DreamSkinActiveTheme {
     Assert-DreamSkinNoReparseComponents -Path $temporary
     Copy-Item -LiteralPath $source -Destination $temporary -Force
     Assert-DreamSkinNoReparseComponents -Path $temporary
-    Assert-DreamSkinImageFile -Path $temporary
+    $null = Assert-DreamSkinMediaFile -Path $temporary
     Move-Item -LiteralPath $temporary -Destination $target -Force
     Assert-DreamSkinNoReparseComponents -Path $target
-    Assert-DreamSkinImageFile -Path $target
+    $null = Assert-DreamSkinMediaFile -Path $target
     $Theme | Add-Member -NotePropertyName image -NotePropertyValue $imageName -Force
+    $Theme | Add-Member -NotePropertyName media -NotePropertyValue `
+      ([pscustomobject]@{ type = $mediaType; playbackRate = if ($Theme.media.playbackRate) {
+        [double]$Theme.media.playbackRate
+      } else { 1 } }) -Force
     if ($Name) { $Theme | Add-Member -NotePropertyName name -NotePropertyValue $Name -Force }
     if (-not $Theme.id) { $Theme | Add-Member -NotePropertyName id -NotePropertyValue 'custom' -Force }
     if (-not $Theme.appearance) { $Theme | Add-Member -NotePropertyName appearance -NotePropertyValue 'auto' -Force }
@@ -300,7 +365,7 @@ function Set-DreamSkinActiveTheme {
   Assert-DreamSkinNoReparseComponents -Path $imageArchive
   Copy-Item -LiteralPath $target -Destination $imageArchive -Force
   Assert-DreamSkinNoReparseComponents -Path $imageArchive
-  Assert-DreamSkinImageFile -Path $imageArchive
+  $null = Assert-DreamSkinMediaFile -Path $imageArchive
   return Read-DreamSkinTheme -ThemeDirectory $paths.Active
 }
 
@@ -326,7 +391,7 @@ function Save-DreamSkinCurrentTheme {
   Assert-DreamSkinNoReparseComponents -Path $destinationImage
   Copy-Item -LiteralPath $active.ImagePath -Destination $destinationImage -Force
   Assert-DreamSkinNoReparseComponents -Path $destinationImage
-  Assert-DreamSkinImageFile -Path $destinationImage
+  $null = Assert-DreamSkinMediaFile -Path $destinationImage
   $theme = $active.Theme | ConvertTo-Json -Depth 8 | ConvertFrom-Json
   $theme.id = $id
   $theme.name = $trimmed
