@@ -726,6 +726,9 @@ try {
   foreach ($requiredTrayAction in @('System.Windows.Forms.NotifyIcon', '暂停皮肤', '更换背景图', '已保存主题', '完全恢复 Codex')) {
     if (-not $traySource.Contains($requiredTrayAction)) { throw "Tray action is missing: $requiredTrayAction" }
   }
+  if (-not $traySource.Contains('[AllowEmptyCollection()][System.Windows.Forms.ToolStripItemCollection]$Items')) {
+    throw 'Tray menu helper does not accept a newly opened empty menu collection.'
+  }
   if (-not $traySource.Contains('$nextPaused') -or -not $traySource.Contains('[System.Windows.Forms.Application]::Exit()')) {
     throw 'Tray pause/restore closures do not terminate cleanly.'
   }

@@ -4,6 +4,8 @@
   <a href="./README.md">中文</a> · <strong>English</strong>
 </p>
 
+> This repository is an enhanced derivative of [Fei-Away/Codex-Dream-Skin](https://github.com/Fei-Away/Codex-Dream-Skin) and preserves its full upstream history. Its current focus is compatibility with recent Windows Codex DOM, sidebar, and system-tray behavior.
+
 <p align="center">
   <strong>Give Codex a face that breathes.</strong><br>
   External themes for the Codex desktop app · Local CDP inject · No official package mutation

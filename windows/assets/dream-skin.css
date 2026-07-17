@@ -182,9 +182,21 @@ html.codex-dream-skin.dream-task-off .dream-task::before {
   display: none;
 }
 
-html.codex-dream-skin .dream-task > * {
+html.codex-dream-skin .dream-task:not(main.main-surface) > * {
   position: relative;
   z-index: 1;
+}
+
+html.codex-dream-skin main.main-surface.dream-task > header.app-header-tint {
+  background: transparent !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+html.codex-dream-skin main.main-surface.dream-task .app-shell-main-content-top-fade {
+  display: none !important;
+  background: transparent !important;
 }
 
 html.codex-dream-skin .dream-task article,

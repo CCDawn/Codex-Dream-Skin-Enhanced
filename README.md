@@ -4,6 +4,8 @@
   <strong>中文</strong> · <a href="./README.en.md">English</a>
 </p>
 
+> 本仓库是 [Fei-Away/Codex-Dream-Skin](https://github.com/Fei-Away/Codex-Dream-Skin) 的增强派生版本，保留完整上游历史；当前重点维护新版 Windows Codex 的 DOM、边栏与系统托盘兼容性。
+
 <p align="center">
   <strong>给 Codex 桌面端换一张会呼吸的脸。</strong><br>
   外部主题 / 换肤工具 · 本机 CDP 注入 · 不改官方安装包

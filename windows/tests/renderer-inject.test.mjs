@@ -19,9 +19,26 @@ assert.doesNotMatch(
   /main\.main-surface\s*>\s*header\.app-header-tint\s*\{[^}]*\b(?:position|z-index)\s*:/,
   "The skin must preserve Codex's native fixed header so the side-panel toggle remains reachable.",
 );
+assert.doesNotMatch(
+  css,
+  /\.dream-task\s*>\s*\*\s*\{[^}]*\bposition\s*:/,
+  "Task styling must not turn the native fixed header into a positioned route child.",
+);
+assert.match(
+  css,
+  /main\.main-surface\.dream-task\s*>\s*header\.app-header-tint\s*\{[^}]*background:\s*transparent !important;/,
+  "Fallback task routes must not paint a separate header band.",
+);
+assert.match(
+  css,
+  /main\.main-surface\.dream-task\s+\.app-shell-main-content-top-fade\s*\{[^}]*display:\s*none !important;/,
+  "Fallback task routes must remove the native top fade seam.",
+);
 
 function createFixture({
   shellPresent,
+  routeMainPresent = true,
+  sidebarPresent = true,
   staleSkin = false,
   homePresent = false,
   utilityPresent = false,
@@ -89,8 +106,9 @@ function createFixture({
       nodes.set(node.id, node);
     },
   };
+  const shellMainClasses = new Set();
   const shellMain = {
-    classList: makeClassList(),
+    classList: makeClassList(shellMainClasses),
     getBoundingClientRect() {
       return { left: 290, top: 36, width: 990, height: 784 };
     },
@@ -150,15 +168,20 @@ function createFixture({
     getElementById(id) { return nodes.get(id) ?? null; },
     querySelector(selector) {
       if (selector === "main.main-surface") return hasShell ? shellMain : null;
-      if (selector === "aside.app-shell-left-panel") return hasShell ? {} : null;
+      if (selector === "aside.app-shell-left-panel") return hasShell && sidebarPresent ? {} : null;
       if (selector === '[role="main"]:has([data-testid="home-icon"])') {
         return hasShell && homePresent ? routeMain : null;
       }
       return null;
     },
     querySelectorAll(selector) {
-      if (selector === '[role="main"]') return hasShell ? [routeMain] : [];
-      if (selector === ".dream-task") return routeClasses.has("dream-task") ? [routeMain] : [];
+      if (selector === '[role="main"]') return hasShell && routeMainPresent ? [routeMain] : [];
+      if (selector === ".dream-task") {
+        const candidates = [];
+        if (routeClasses.has("dream-task")) candidates.push(routeMain);
+        if (shellMainClasses.has("dream-task")) candidates.push(shellMain);
+        return candidates;
+      }
       if (selector === ".dream-home-utility") {
         return utilityClasses.has("dream-home-utility") ? [utilityNode] : [];
       }
@@ -224,6 +247,7 @@ function createFixture({
     rootStyles,
     revokedUrls,
     routeClasses,
+    shellMainClasses,
     utilityClasses,
     setShellPresent(value) { hasShell = value; },
   };
@@ -246,6 +270,18 @@ assert.equal(main.rootClasses.has("dream-theme-dark"), false);
 assert.equal(main.nodes.has("codex-dream-skin-style"), false);
 assert.equal(main.nodes.has("codex-dream-skin-chrome"), false);
 assert.deepEqual(main.revokedUrls, ["blob:fixture-1"]);
+
+const currentShell = createFixture({
+  shellPresent: true,
+  routeMainPresent: false,
+  sidebarPresent: false,
+});
+const currentShellResult = vm.runInNewContext(payload, currentShell.context);
+assert.equal(currentShellResult.installed, true);
+assert.equal(currentShell.rootClasses.has("codex-dream-skin"), true);
+assert.equal(currentShell.shellMainClasses.has("dream-task"), true);
+assert.equal(currentShell.context.window.__CODEX_DREAM_SKIN_STATE__.cleanup(), true);
+assert.equal(currentShell.shellMainClasses.has("dream-task"), false);
 
 const reinjected = createFixture({ shellPresent: true });
 vm.runInNewContext(payload, reinjected.context);

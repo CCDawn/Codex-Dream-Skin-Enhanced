@@ -327,8 +327,7 @@
     if (!root || !document.body) return;
 
     const shellMain = document.querySelector("main.main-surface");
-    const shellSidebar = document.querySelector("aside.app-shell-left-panel");
-    if (!shellMain || !shellSidebar) {
+    if (!shellMain) {
       clearSkinDom();
       return;
     }
@@ -348,7 +347,8 @@
     }
 
     const home = document.querySelector('[role="main"]:has([data-testid="home-icon"])');
-    for (const candidate of document.querySelectorAll('[role="main"]')) {
+    const routeMains = [...document.querySelectorAll('[role="main"]')];
+    for (const candidate of routeMains) {
       candidate.classList.toggle("dream-home", candidate === home);
       candidate.classList.toggle("dream-task", candidate !== home);
     }
@@ -358,6 +358,7 @@
     }
     for (const candidate of utilityBars) candidate.classList.add(HOME_UTILITY_CLASS);
     shellMain.classList.toggle("dream-home-shell", Boolean(home));
+    shellMain.classList.toggle("dream-task", !home && routeMains.length === 0);
 
     let chrome = document.getElementById(CHROME_ID);
     if (!chrome || chrome.parentElement !== document.body) {
