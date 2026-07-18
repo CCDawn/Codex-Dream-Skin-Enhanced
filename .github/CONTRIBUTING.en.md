@@ -4,7 +4,7 @@
   <a href="./CONTRIBUTING.md">中文</a> · <strong>English</strong>
 </p>
 
-Thanks for contributing to Codex Dream Skin. The project loads external themes into the official Codex desktop app through loopback CDP. macOS and Windows have separate install, injection, and restore paths, so choose the target platform before changing files.
+Thanks for contributing to Codex 动态壁纸. The project loads external themes into the official Codex desktop app through loopback CDP. macOS and Windows have separate install, injection, and restore paths, so choose the target platform before changing files.
 
 ## Before you start
 

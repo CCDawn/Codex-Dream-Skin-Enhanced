@@ -1,4 +1,4 @@
-# Codex Dream Skin Studio
+# Codex 动态壁纸
 
 Unofficial macOS theme studio for the **official Codex Desktop** app.
 

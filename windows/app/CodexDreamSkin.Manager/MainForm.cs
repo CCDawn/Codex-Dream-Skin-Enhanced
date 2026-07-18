@@ -10,6 +10,7 @@ namespace CodexDreamSkin.Manager;
 
 internal sealed class MainForm : Form
 {
+  private const string DisplayName = "Codex 动态壁纸";
   private static readonly Color Canvas = Color.FromArgb(17, 19, 24);
   private static readonly Color Surface = Color.FromArgb(25, 28, 35);
   private static readonly Color SurfaceRaised = Color.FromArgb(34, 38, 47);
@@ -37,6 +38,7 @@ internal sealed class MainForm : Form
   private readonly Label _statusLabel = new();
   private readonly Panel _statusDot = new();
   private readonly Button _startButton = new();
+  private readonly Button _importButton = new();
   private readonly Button _pauseButton = new();
   private readonly Button _applyButton = new();
   private readonly Button _restoreButton = new();
@@ -66,7 +68,7 @@ internal sealed class MainForm : Form
     _settings = settingsStore.Load();
     Directory.CreateDirectory(_settings.LibraryPath);
 
-    Text = "Codex Dream Skin";
+    Text = DisplayName;
     StartPosition = FormStartPosition.CenterScreen;
     MinimumSize = new Size(1060, 680);
     Size = new Size(1280, 800);
@@ -128,30 +130,29 @@ internal sealed class MainForm : Form
       BackColor = Surface,
       Padding = new Padding(26, 14, 22, 12),
     };
-    var brand = CreateLabel("Codex Dream Skin", 20f, FontStyle.Bold, TextPrimary);
+    var brand = CreateLabel(DisplayName, 20f, FontStyle.Bold, TextPrimary);
     brand.AutoSize = true;
-    brand.Location = new Point(26, 13);
+    brand.Location = new Point(26, 24);
     header.Controls.Add(brand);
-    var subtitle = CreateLabel("Codex 内部壁纸管理器", 9.5f, FontStyle.Regular, TextMuted);
-    subtitle.AutoSize = true;
-    subtitle.Location = new Point(28, 49);
-    header.Controls.Add(subtitle);
 
     _statusDot.Size = new Size(10, 10);
     _statusDot.BackColor = Warning;
     _statusDot.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-    _statusDot.Location = new Point(header.Width - 322, 39);
+    _statusDot.Location = new Point(header.Width - 478, 39);
     header.Controls.Add(_statusDot);
-    _statusLabel.AutoSize = true;
+    _statusLabel.AutoSize = false;
+    _statusLabel.Size = new Size(280, 54);
     _statusLabel.ForeColor = TextMuted;
     _statusLabel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-    _statusLabel.Location = new Point(header.Width - 304, 34);
-    _statusLabel.Text = "正在读取状态";
+    _statusLabel.Location = new Point(header.Width - 460, 17);
+    _statusLabel.TextAlign = ContentAlignment.MiddleLeft;
+    _statusLabel.Text = "正在读取状态\r\n当前壁纸：正在读取";
+    _statusLabel.AccessibleName = "Codex 和动态壁纸运行状态";
     header.Controls.Add(_statusLabel);
     header.Resize += (_, _) =>
     {
-      _statusDot.Left = header.ClientSize.Width - 322;
-      _statusLabel.Left = header.ClientSize.Width - 304;
+      _statusDot.Left = header.ClientSize.Width - 478;
+      _statusLabel.Left = header.ClientSize.Width - 460;
       _startButton.Left = header.ClientSize.Width - _startButton.Width - 22;
     };
 
@@ -159,11 +160,11 @@ internal sealed class MainForm : Form
     _startButton.Size = new Size(150, 42);
     _startButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
     _startButton.Location = new Point(header.Width - 172, 23);
-    _startButton.AccessibleName = "启动或重新应用 Codex Dream Skin";
+    _startButton.AccessibleName = "启动或重新应用 Codex 动态壁纸";
     _startButton.Click += async (_, _) => await RunOperationAsync(
-      "正在启动 Codex Dream Skin…",
+      "正在启动 Codex 动态壁纸…",
       () => _service.StartAsync(_lifetime.Token),
-      "Dream Skin 已启动。");
+      "Codex 动态壁纸已启动。");
     header.Controls.Add(_startButton);
 
     var left = new Panel
@@ -186,6 +187,14 @@ internal sealed class MainForm : Form
     _libraryPathLabel.AccessibleName = "当前壁纸库路径";
     left.Controls.Add(_libraryPathLabel);
     left.Controls.SetChildIndex(_libraryPathLabel, 0);
+
+    ConfigureButton(_importButton, "添加壁纸", true);
+    _importButton.Dock = DockStyle.Top;
+    _importButton.Height = 40;
+    _importButton.AccessibleName = "添加图片或视频壁纸";
+    _importButton.Click += async (_, _) => await ImportWallpapersAsync();
+    left.Controls.Add(_importButton);
+    left.Controls.SetChildIndex(_importButton, 0);
 
     var chooseFolderButton = new Button();
     ConfigureButton(chooseFolderButton, "更换壁纸库", false);
@@ -438,7 +447,7 @@ internal sealed class MainForm : Form
       token.ThrowIfCancellationRequested();
       ClearLibraryCards();
       _librarySummary.Text = items.Count == 0
-        ? "没有找到支持的壁纸"
+        ? "暂无壁纸 · 点击左侧「添加壁纸」导入"
         : $"共 {items.Count} 个可直接使用的壁纸";
 
       foreach (var item in items)
@@ -632,7 +641,7 @@ internal sealed class MainForm : Form
   private async Task RestoreAsync()
   {
     var answer = MessageBox.Show(
-      "这会停止 Dream Skin 并恢复 Codex 官方外观。Codex 可能需要重启一次。是否继续？",
+      "这会停止动态壁纸并恢复 Codex 官方外观。Codex 可能需要重启一次。是否继续？",
       "恢复官方外观",
       MessageBoxButtons.YesNo,
       MessageBoxIcon.Warning,
@@ -647,6 +656,90 @@ internal sealed class MainForm : Form
       () => _service.RestoreAsync(_lifetime.Token),
       "已恢复 Codex 官方外观。",
       refreshLibrary: false);
+  }
+
+  private async Task ImportWallpapersAsync()
+  {
+    using var dialog = new OpenFileDialog
+    {
+      Title = "添加壁纸",
+      Filter = "支持的壁纸|*.png;*.jpg;*.jpeg;*.webp;*.mp4;*.webm|" +
+        "图片壁纸|*.png;*.jpg;*.jpeg;*.webp|动态壁纸|*.mp4;*.webm",
+      InitialDirectory = _settings.LibraryPath,
+      Multiselect = true,
+      CheckFileExists = true,
+      RestoreDirectory = true,
+    };
+    if (dialog.ShowDialog(this) != DialogResult.OK)
+    {
+      return;
+    }
+
+    SetBusy(true);
+    ShowMessage($"正在添加 {dialog.FileNames.Length} 个壁纸…", false);
+    try
+    {
+      Directory.CreateDirectory(_settings.LibraryPath);
+      var added = 0;
+      foreach (var source in dialog.FileNames)
+      {
+        _lifetime.Token.ThrowIfCancellationRequested();
+        var sourcePath = Path.GetFullPath(source);
+        if (!WallpaperCatalog.IsSupported(sourcePath))
+        {
+          throw new InvalidOperationException(
+            $"不支持的壁纸格式：{Path.GetFileName(sourcePath)}");
+        }
+        if ((File.GetAttributes(sourcePath) & FileAttributes.ReparsePoint) != 0)
+        {
+          throw new InvalidOperationException(
+            $"壁纸不能是符号链接或重解析点：{Path.GetFileName(sourcePath)}");
+        }
+        if (IsInsideDirectory(sourcePath, _settings.LibraryPath))
+        {
+          continue;
+        }
+
+        var destination = GetAvailableDestination(
+          _settings.LibraryPath,
+          Path.GetFileName(sourcePath));
+        await using var input = new FileStream(
+          sourcePath,
+          FileMode.Open,
+          FileAccess.Read,
+          FileShare.Read,
+          1024 * 1024,
+          FileOptions.Asynchronous | FileOptions.SequentialScan);
+        await using var output = new FileStream(
+          destination,
+          FileMode.CreateNew,
+          FileAccess.Write,
+          FileShare.None,
+          1024 * 1024,
+          FileOptions.Asynchronous | FileOptions.SequentialScan);
+        await input.CopyToAsync(output, _lifetime.Token);
+        await output.FlushAsync(_lifetime.Token);
+        added++;
+      }
+
+      await ReloadLibraryAsync();
+      ShowMessage(
+        added == 0 ? "所选壁纸已在当前壁纸库中。" : $"已添加 {added} 个壁纸。",
+        false);
+    }
+    catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
+    {
+      // App shutdown owns cancellation.
+    }
+    catch (Exception exception)
+    {
+      await ReloadLibraryAsync();
+      ShowError(exception);
+    }
+    finally
+    {
+      SetBusy(false);
+    }
   }
 
   private async Task ChooseLibraryAsync()
@@ -719,8 +812,14 @@ internal sealed class MainForm : Form
   {
     var status = _service.GetStatus();
     _pauseRequested = status.Paused;
-    _statusLabel.Text = status.Summary;
-    _statusDot.BackColor = status.Paused ? Warning : status.WatcherRunning ? Success : Warning;
+    _statusLabel.Text = $"{status.Summary}\r\n当前壁纸：{status.CurrentWallpaperLabel}";
+    _statusDot.BackColor = status.Paused
+      ? Warning
+      : status.WatcherRunning
+        ? Success
+        : status.CodexRunning
+          ? Accent
+          : Warning;
     _pauseButton.Text = status.Paused ? "恢复皮肤" : "暂停皮肤";
     _pauseButton.Enabled = !_busy && (status.WatcherRunning || status.Paused);
     if (!_revealSlider.Focused)
@@ -728,7 +827,7 @@ internal sealed class MainForm : Form
       _revealSlider.Value = Math.Clamp(status.RevealPercent, 0, 100);
       UpdateRevealLabel();
     }
-    _trayIcon.Text = $"Codex Dream Skin · {status.Summary}";
+    _trayIcon.Text = $"{DisplayName} · {status.Summary}";
   }
 
   private void UpdateRevealLabel()
@@ -742,6 +841,7 @@ internal sealed class MainForm : Form
   {
     _busy = busy;
     _startButton.Enabled = !busy;
+    _importButton.Enabled = !busy;
     _restoreButton.Enabled = !busy;
     _applyButton.Enabled = !busy && _selectedWallpaper is not null;
     _revealSlider.Enabled = !busy;
@@ -760,7 +860,7 @@ internal sealed class MainForm : Form
     ShowMessage(exception.Message, true);
     MessageBox.Show(
       exception.Message,
-      "Codex Dream Skin",
+      DisplayName,
       MessageBoxButtons.OK,
       MessageBoxIcon.Error);
   }
@@ -775,9 +875,9 @@ internal sealed class MainForm : Form
     };
     menu.Items.Add("打开壁纸管理器", null, (_, _) => ShowManager());
     menu.Items.Add("启动 / 重新应用", null, async (_, _) => await RunOperationAsync(
-      "正在启动 Codex Dream Skin…",
+      "正在启动 Codex 动态壁纸…",
       () => _service.StartAsync(_lifetime.Token),
-      "Dream Skin 已启动。"));
+      "Codex 动态壁纸已启动。"));
     menu.Items.Add("暂停 / 恢复", null, async (_, _) =>
     {
       var status = _service.GetStatus();
@@ -795,7 +895,7 @@ internal sealed class MainForm : Form
     var tray = new NotifyIcon
     {
       Icon = _appIcon,
-      Text = "Codex Dream Skin",
+      Text = DisplayName,
       Visible = true,
       ContextMenuStrip = menu,
     };
@@ -821,7 +921,7 @@ internal sealed class MainForm : Form
     Hide();
     _trayIcon.ShowBalloonTip(
       1800,
-      "Codex Dream Skin",
+      DisplayName,
       "管理器仍在任务栏托盘运行。",
       ToolTipIcon.Info);
   }
@@ -884,6 +984,35 @@ internal sealed class MainForm : Form
     return path.StartsWith(desktop, StringComparison.OrdinalIgnoreCase)
       ? "桌面" + path[desktop.Length..]
       : path;
+  }
+
+  private static bool IsInsideDirectory(string path, string directory)
+  {
+    var relative = Path.GetRelativePath(Path.GetFullPath(directory), Path.GetFullPath(path));
+    return !Path.IsPathRooted(relative) &&
+      !relative.Equals("..", StringComparison.Ordinal) &&
+      !relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal);
+  }
+
+  private static string GetAvailableDestination(string directory, string fileName)
+  {
+    var destination = Path.Combine(directory, fileName);
+    if (!File.Exists(destination))
+    {
+      return destination;
+    }
+
+    var stem = Path.GetFileNameWithoutExtension(fileName);
+    var extension = Path.GetExtension(fileName);
+    for (var index = 2; index < 10_000; index++)
+    {
+      destination = Path.Combine(directory, $"{stem} ({index}){extension}");
+      if (!File.Exists(destination))
+      {
+        return destination;
+      }
+    }
+    throw new IOException($"无法为壁纸生成可用文件名：{fileName}");
   }
 
   private static Icon CreateAppIcon()

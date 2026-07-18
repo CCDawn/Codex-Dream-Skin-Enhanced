@@ -10,7 +10,7 @@
     <AssemblyName>CodexDreamSkinManager</AssemblyName>
     <RootNamespace>CodexDreamSkin.Manager</RootNamespace>
     <Version>1.0.0</Version>
-    <Product>Codex Dream Skin Manager</Product>
+    <Product>Codex 动态壁纸</Product>
     <Description>One-click wallpaper manager for the official Codex Windows app.</Description>
     <Authors>CCDawn</Authors>
     <Copyright>Copyright © CCDawn</Copyright>

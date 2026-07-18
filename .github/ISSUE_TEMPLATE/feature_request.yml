@@ -1,5 +1,5 @@
 name: "Feature request / 功能建议"
-description: "Suggest an improvement for Codex Dream Skin / 为换肤工具提改进建议"
+description: "Suggest an improvement for Codex 动态壁纸 / 为动态壁纸工具提改进建议"
 title: "[Feature]: "
 labels: ["enhancement", "needs-triage"]
 body:
@@ -78,7 +78,7 @@ body:
       label: Scope check / 范围确认
       description: This helps filter out-of-scope requests / 帮助过滤超出项目范围的请求
       options:
-        - label: This is about theming / UX of Dream Skin, not API keys or model relays / 这是换肤或皮肤工具体验，不是 API / 中转配置
+        - label: This is about theming / UX of Codex 动态壁纸, not API keys or model relays / 这是动态壁纸工具体验，不是 API / 中转配置
           required: true
         - label: I am not asking to modify official Codex binaries / asar / 我不是在要求修改官方 Codex 二进制或 asar
           required: true

@@ -1,4 +1,4 @@
-# Codex Dream Skin 纯背景生图提示词
+# Codex 动态壁纸纯背景生图提示词
 
 本文按 `docs/images/gallery/skin-01.jpg` ～ `skin-08.jpg` 的视觉方向，拆解为可直接生成的**纯背景图**提示词。
 

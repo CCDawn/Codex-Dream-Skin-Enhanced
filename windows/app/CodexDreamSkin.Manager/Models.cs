@@ -33,10 +33,22 @@ internal sealed record DreamSkinStatus(
   int RevealPercent)
 {
   public string Summary => Paused
-    ? "皮肤已暂停"
+    ? CodexRunning
+      ? "Codex 已打开 · 壁纸已暂停"
+      : "Codex 未打开 · 壁纸已暂停"
     : WatcherRunning
-      ? "Codex 壁纸正在运行"
-      : "等待启动";
+      ? CodexRunning
+        ? "Codex 已连接 · 壁纸运行中"
+        : "Codex 未打开 · 壁纸服务运行中"
+      : CodexRunning
+        ? "Codex 已打开 · 壁纸未启动"
+        : "Codex 未打开 · 壁纸未启动";
+
+  public string CurrentWallpaperLabel => !string.IsNullOrWhiteSpace(ActiveTheme)
+    ? ActiveTheme
+    : !string.IsNullOrWhiteSpace(MediaPath)
+      ? Path.GetFileNameWithoutExtension(MediaPath)
+      : "未设置";
 }
 
 internal sealed class AppSettings

@@ -1,4 +1,4 @@
-# Codex Dream Skin 效果展厅
+# Codex 动态壁纸效果展厅
 
 [返回项目首页](../README.md) · [English](./showcase.en.md)
 
@@ -6,22 +6,22 @@
 
 ## 真实注入效果
 
-### Dream Skin 红白科幻
+### 红白科幻
 
 <p align="center">
-  <img src="images/screenshot-demo-art.png" alt="Codex Dream Skin 红白科幻真实注入效果" width="900">
+  <img src="images/screenshot-demo-art.png" alt="Codex 动态壁纸红白科幻效果" width="900">
 </p>
 
 ### Windows 沉浸式主题
 
 <p align="center">
-  <img src="images/screenshot-windows-hero.png" alt="Codex Dream Skin Windows 沉浸式主题" width="900">
+  <img src="images/screenshot-windows-hero.png" alt="Codex 动态壁纸 Windows 沉浸式主题" width="900">
 </p>
 
 ### macOS 暗色主题
 
 <p align="center">
-  <img src="images/screenshot-macos-home.png" alt="Codex Dream Skin macOS 暗色主题" width="900">
+  <img src="images/screenshot-macos-home.png" alt="Codex 动态壁纸 macOS 暗色主题" width="900">
 </p>
 
 ## 实测人物预设：桥本有菜

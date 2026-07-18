@@ -4,7 +4,7 @@
   <strong>中文</strong> · <a href="./CONTRIBUTING.en.md">English</a>
 </p>
 
-感谢你为 Codex Dream Skin 提交改进。这个项目通过本机回环 CDP 给官方 Codex 桌面应用加载外部主题。macOS 和 Windows 有独立的安装、注入与恢复路径，请先确定改动属于哪个平台，再缩小范围。
+感谢你为 Codex 动态壁纸提交改进。这个项目通过本机回环 CDP 给官方 Codex 桌面应用加载外部主题。macOS 和 Windows 有独立的安装、注入与恢复路径，请先确定改动属于哪个平台，再缩小范围。
 
 ## 开始之前
 

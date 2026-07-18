@@ -129,7 +129,10 @@ try {
     '$trayScript = $engine.Tray',
     '$shortcut.WorkingDirectory = $engine.Root',
     '$restore.WorkingDirectory = $engine.Root',
-    '$tray.WorkingDirectory = $engine.Root'
+    '$tray.WorkingDirectory = $engine.Root',
+    'Codex 动态壁纸.lnk',
+    'Codex 动态壁纸 - 托盘控制.lnk',
+    'Codex 动态壁纸 - 恢复官方外观.lnk'
   )) {
     if (-not $installSource.Contains($requiredShortcutBinding)) {
       throw "Installer shortcut still depends on its source checkout: $requiredShortcutBinding"
@@ -820,6 +823,11 @@ try {
     Join-Path $Root 'app\CodexDreamSkin.Manager\MainForm.cs'
   )
   foreach ($managerUiContract in @(
+    'Codex 动态壁纸',
+    '添加壁纸',
+    'Multiselect = true',
+    '当前壁纸：{status.CurrentWallpaperLabel}',
+    '暂无壁纸 · 点击左侧「添加壁纸」导入',
     '100% · 原始壁纸画面',
     '开机启动管理器',
     '退出管理器',
@@ -827,6 +835,18 @@ try {
   )) {
     if (-not $managerFormSource.Contains($managerUiContract)) {
       throw "Graphical manager UI contract is missing: $managerUiContract"
+    }
+  }
+  $managerModelSource = Read-DreamSkinUtf8File -Path (
+    Join-Path $Root 'app\CodexDreamSkin.Manager\Models.cs'
+  )
+  foreach ($managerStatusContract in @(
+    'Codex 已打开 · 壁纸未启动',
+    'Codex 未打开 · 壁纸未启动',
+    'CurrentWallpaperLabel'
+  )) {
+    if (-not $managerModelSource.Contains($managerStatusContract)) {
+      throw "Graphical manager status contract is missing: $managerStatusContract"
     }
   }
 
@@ -860,7 +880,7 @@ try {
   $stateReadIndex = $startSource.IndexOf('$previousState = Read-DreamSkinState', [System.StringComparison]::Ordinal)
   $restartPromptIndex = $startSource.IndexOf('$restartAuthorized = Confirm-DreamSkinRestart', [System.StringComparison]::Ordinal)
   $recordedStopIndex = $startSource.IndexOf('$recordedInjectorStopped = Stop-DreamSkinRecordedInjector', [System.StringComparison]::Ordinal)
-  $cancelIndex = $startSource.IndexOf("Write-Host 'Dream Skin launch was cancelled", [System.StringComparison]::Ordinal)
+  $cancelIndex = $startSource.IndexOf("Write-Host 'Codex 动态壁纸启动已取消", [System.StringComparison]::Ordinal)
   $pauseClearIndex = $startSource.IndexOf('Set-DreamSkinPaused -Paused $false', [System.StringComparison]::Ordinal)
   if ($stateReadIndex -lt 0 -or $pauseClearIndex -le $stateReadIndex -or
     ($restartPromptIndex -ge 0 -and $pauseClearIndex -le $restartPromptIndex) -or

@@ -1,4 +1,4 @@
-# Codex Dream Skin Showcase
+# Codex 动态壁纸 Showcase
 
 [Project home](../README.en.md) · [中文](./showcase.md)
 
@@ -6,22 +6,22 @@ This gallery collects tested themes and concept directions. The sidebar, cards, 
 
 ## Real injected themes
 
-### Dream Skin red-white sci-fi
+### Red-white sci-fi
 
 <p align="center">
-  <img src="images/screenshot-demo-art.png" alt="Codex Dream Skin red-white sci-fi theme" width="900">
+  <img src="images/screenshot-demo-art.png" alt="Codex 动态壁纸 red-white sci-fi theme" width="900">
 </p>
 
 ### Windows immersive theme
 
 <p align="center">
-  <img src="images/screenshot-windows-hero.png" alt="Codex Dream Skin Windows immersive theme" width="900">
+  <img src="images/screenshot-windows-hero.png" alt="Codex 动态壁纸 Windows immersive theme" width="900">
 </p>
 
 ### macOS dark theme
 
 <p align="center">
-  <img src="images/screenshot-macos-home.png" alt="Codex Dream Skin macOS dark theme" width="900">
+  <img src="images/screenshot-macos-home.png" alt="Codex 动态壁纸 macOS dark theme" width="900">
 </p>
 
 ## Tested character preset: Arina Hashimoto
