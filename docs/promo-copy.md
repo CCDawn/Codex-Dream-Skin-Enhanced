@@ -4,6 +4,8 @@
 
 Windows 下载：https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/releases/latest/download/CodexDreamSkinManager.exe
 
+GitHub 公告：https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/discussions/5
+
 ---
 
 ## 一句话
@@ -28,7 +30,54 @@ Windows 直接下载：
 
 https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/releases/latest/download/CodexDreamSkinManager.exe
 
-## 中版（公众号 / 即刻 / 小红书）
+## 即刻版
+
+我给 Codex 桌面端做了一个开源的主题与动态壁纸管理器。
+
+不是覆盖一张不能操作的假界面：原生侧栏、任务和输入框仍然可以正常交互。Windows 版是自包含单文件 EXE，支持 PNG / JPEG / WebP / MP4 / WebM，可以预览、切换、调整透出度，也能一键恢复官方外观。
+
+实现上只连接本机 `127.0.0.1` CDP，不改 WindowsApps、`app.asar` 或官方代码签名。
+
+项目：
+https://github.com/CCDawn/Codex-Dream-Skin-Enhanced
+
+下载：
+https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/releases/latest/download/CodexDreamSkinManager.exe
+
+#Codex #OpenAI #开源项目 #Windows #动态壁纸
+
+## 小红书版
+
+### 标题
+
+给 Codex 装上动态壁纸｜单文件 EXE 下载即用
+
+### 正文
+
+最近把 Codex 的工作界面改成了真正可交互的主题和动态壁纸 ✨
+
+不是桌面壁纸，也不是盖在窗口上的假截图。Codex 原来的侧栏、任务、项目选择器和输入框都能继续点击和输入。
+
+现在 Windows 版已经做成完整图形化管理器：
+
+- ✅ PNG / JPEG / WebP 静态壁纸
+- ✅ MP4 / WebM 动态壁纸
+- ✅ 本地预览、搜索和一键切换
+- ✅ 自由调整壁纸透出度
+- ✅ 随时恢复 Codex 官方外观
+- ✅ 单文件 EXE，不用另装 Node.js 或 .NET SDK
+
+项目完全开源，通过本机 `127.0.0.1` 连接运行，不修改官方安装包。
+
+开源地址和 Windows 下载链接放在评论区 / 个人主页，也可以直接搜索：
+
+`CCDawn Codex Dream Skin`
+
+#Codex #OpenAI #程序员桌面 #动态壁纸 #开源软件 #Windows软件 #效率工具
+
+> 小红书正文中的站外链接可能无法直接点击；发布时把仓库地址放在评论区或个人主页，并使用 `docs/images/social-preview.png` 作为首图。
+
+## 中版（公众号）
 
 ### 标题可选
 

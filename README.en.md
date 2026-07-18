@@ -27,6 +27,8 @@
   ·
   <a href="./docs/showcase.en.md">View showcase</a>
   ·
+  <a href="https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/discussions">Join discussions</a>
+  ·
   <a href="https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/issues">Report an issue</a>
 </p>
 
@@ -197,6 +199,8 @@ Thanks to [passion8.cc](https://passion8.cc/register?aff=TuPe) for sponsoring th
 
 ## Feedback and contributions
 
+- Announcements, theme sharing, and community help: [GitHub Discussions](https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/discussions).
+- Launch announcement: [Codex Dream Skin v1.0.0 is now available](https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/discussions/5).
 - Use the [Bug / Feature issue templates](./.github/ISSUE_TEMPLATE/).
 - PRs should include the platform, reproduction or goal, validation command, and restore test.
 - Contribution guide: [中文](./.github/CONTRIBUTING.md) · [English](./.github/CONTRIBUTING.en.md)
