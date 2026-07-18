@@ -1,4 +1,4 @@
-. (Join-Path $PSScriptRoot 'config-utf8.ps1')
+﻿. (Join-Path $PSScriptRoot 'config-utf8.ps1')
 
 function Enter-DreamSkinOperationLock {
   $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
@@ -802,5 +802,5 @@ function Stop-DreamSkinCodex {
 function Confirm-DreamSkinRestart {
   param([string]$Message)
   $shell = New-Object -ComObject WScript.Shell
-  return $shell.Popup($Message, 0, 'Codex Dream Skin', 52) -eq 6
+  return $shell.Popup($Message, 0, 'Codex 动态壁纸', 52) -eq 6
 }

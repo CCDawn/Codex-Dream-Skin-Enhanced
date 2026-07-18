@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
   [int]$Port = 9335,
   [switch]$NoShortcuts
@@ -55,15 +55,15 @@ try {
     $portArgument = if ($PortExplicit) { " -Port $Port" } else { '' }
 
     foreach ($folder in @($desktop, $startMenu)) {
-      $shortcut = $shell.CreateShortcut((Join-Path $folder 'Codex Dream Skin.lnk'))
+      $shortcut = $shell.CreateShortcut((Join-Path $folder 'Codex 动态壁纸.lnk'))
       $shortcut.TargetPath = $powershell
       $shortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$startScript`"$portArgument -PromptRestart"
       $shortcut.WorkingDirectory = $engine.Root
-      $shortcut.Description = 'Launch the official Codex app with Codex Dream Skin'
+      $shortcut.Description = '启动 Codex 并应用动态壁纸'
       $shortcut.Save()
     }
 
-    $restore = $shell.CreateShortcut((Join-Path $desktop 'Codex Dream Skin - Restore.lnk'))
+    $restore = $shell.CreateShortcut((Join-Path $desktop 'Codex 动态壁纸 - 恢复官方外观.lnk'))
     $restore.TargetPath = $powershell
     $restore.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$restoreScript`"$portArgument -RestoreBaseTheme -PromptRestart"
     $restore.WorkingDirectory = $engine.Root
@@ -71,11 +71,11 @@ try {
     $restore.Save()
 
     foreach ($folder in @($desktop, $startMenu)) {
-      $tray = $shell.CreateShortcut((Join-Path $folder 'Codex Dream Skin - Tray.lnk'))
+      $tray = $shell.CreateShortcut((Join-Path $folder 'Codex 动态壁纸 - 托盘控制.lnk'))
       $tray.TargetPath = $powershell
       $tray.Arguments = "-NoProfile -STA -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$trayScript`"$portArgument"
       $tray.WorkingDirectory = $engine.Root
-      $tray.Description = 'Open Codex Dream Skin status and theme controls in the system tray'
+      $tray.Description = '打开 Codex 动态壁纸托盘控制'
       $tray.Save()
     }
     Start-Process -FilePath $powershell -ArgumentList `
@@ -84,9 +84,9 @@ try {
   }
 
   if ($NoShortcuts) {
-    Write-Host "Codex Dream Skin base theme installed at $($engine.Root). Run $($engine.Start) to launch it."
+    Write-Host "Codex 动态壁纸已安装到 $($engine.Root)。运行 $($engine.Start) 即可启动。"
   } else {
-    Write-Host 'Codex Dream Skin installed. The launch shortcut asks before restarting an open Codex window.'
+    Write-Host 'Codex 动态壁纸已安装。启动快捷方式会在重启已打开的 Codex 前询问。'
   }
 } finally {
   Exit-DreamSkinOperationLock -Mutex $operationLock

@@ -68,7 +68,7 @@ body:
   - type: input
     id: dream_skin_version
     attributes:
-      label: Dream Skin version / 皮肤工具版本
+      label: Codex 动态壁纸 version / 工具版本
       description: |
         macOS: `macos/VERSION` in the repo, or client ZIP release notes (e.g. 1.1.1).
         Windows: commit / download date if no version file.

@@ -1,4 +1,4 @@
-# Codex Dream Skin · 项目记录
+# Codex 动态壁纸 · 项目记录
 
 > 本地归档说明。面向维护者，不是用户安装手册。  
 > 仓库首页：[`../README.md`](../README.md)（中文）· [`../README.en.md`](../README.en.md)（English）  
@@ -8,7 +8,7 @@
 
 ## 1. 它是什么
 
-**Codex Dream Skin** 是给 **OpenAI Codex 桌面端** 用的**外部主题 / 换肤**方案：
+**Codex 动态壁纸**是给 **OpenAI Codex 桌面端**用的**外部主题 / 换肤**方案：
 
 - 本机 **CDP** 注入 CSS + 装饰 DOM
 - **不修改**官方 `.app` / `app.asar` / WindowsApps / 代码签名

@@ -20,7 +20,7 @@ internal sealed class DreamSkinService
       _runtime.StartScript,
       new[] { "-Port", "9335", "-PromptRestart" },
       cancellationToken);
-    result.ThrowIfFailed("启动 Dream Skin");
+    result.ThrowIfFailed("启动 Codex 动态壁纸");
   }
 
   public async Task ApplyWallpaperAsync(string path, CancellationToken cancellationToken = default)

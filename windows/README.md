@@ -1,23 +1,31 @@
-# Codex Dream Skin for Windows
+# Codex 动态壁纸
 
 <p align="center">
   <strong>中文</strong> · <a href="./README.en.md">English</a>
 </p>
 
-Codex Dream Skin 通过本机回环 CDP 给官方 Codex Windows 桌面应用加载外部主题。它保留原生侧栏、项目选择、任务内容和输入框，不修改 WindowsApps、`app.asar` 或应用签名。
+Codex 动态壁纸通过本机回环 CDP 给官方 Codex Windows 桌面应用加载外部主题。它保留原生侧栏、项目选择、任务内容和输入框，不修改 WindowsApps、`app.asar` 或应用签名。
 
-## 图形化 EXE 管理器
+## 普通用户：下载 EXE
 
-`windows/app/CodexDreamSkin.Manager` 提供完整的 Windows 图形化管理器。发布版是自包含的
-单文件 `CodexDreamSkinManager.exe`，内置经过验证的 Dream Skin 引擎和 Node.js 运行时；最终
-用户不需要安装 Node.js、.NET SDK 或手动运行 PowerShell。
+1. 下载 [`CodexDreamSkinManager.exe`](https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/releases/latest/download/CodexDreamSkinManager.exe)。
+2. 双击运行，点击「添加壁纸」导入图片或视频。
+3. 选择壁纸并点击「应用到 Codex」；需要时点击「启动 / 重新应用」。
+
+发布版是自包含的单文件程序，内置经过验证的动态壁纸引擎和 Node.js 运行时。普通用户不需要安装 Node.js、.NET SDK，也不需要手动运行 PowerShell。程序不需要管理员权限。
+
+> 当前发布版尚未进行代码签名，Windows 可能显示“未知发布者”。请只从本仓库 Releases 下载，并核对同页 SHA256。
+
+## 管理器功能
 
 管理器支持：
 
 - 浏览、搜索并预览桌面壁纸库中的 PNG、JPEG、WebP、MP4 和 WebM。
-- 一键启动或重新应用 Dream Skin、切换壁纸、暂停/恢复以及还原官方外观。
+- 一键启动或重新应用动态壁纸、切换壁纸、暂停/恢复以及还原官方外观。
 - 调整「壁纸透出」程度，100% 时视频保持原始画面且整页主题蒙层为零。
 - 系统托盘控制和可选的当前用户开机启动。
+
+## 开发者：构建与脚本安装
 
 开发者可使用下列命令构建单文件版本：
 
@@ -28,15 +36,15 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\app\build-manager.ps1
 构建脚本会运行 Windows 回归测试、嵌入本机可信的 Node.js 22+ 运行时、发布自包含
 `win-x64` EXE，并执行发布后自检。输出位于 `windows/dist`。
 
-## 运行要求
+### 源码与脚本运行要求
 
 - 从 Microsoft Store 安装且已注册到当前用户的官方 `OpenAI.Codex` 应用。
 - Node.js 22 或更高版本，`node.exe` 可从 `PATH` 找到。
 - Windows PowerShell 5.1 或更高版本。
 
-安装脚本需要在 Codex 完全退出后运行。普通使用不需要管理员权限，也不需要接管 WindowsApps 目录。
+这些依赖只适用于源码脚本和本地构建，不适用于上面的发布版 EXE。安装脚本需要在 Codex 完全退出后运行。
 
-## 安装
+### 从源码安装
 
 在 PowerShell 中进入仓库的 `windows` 目录，然后运行：
 
@@ -46,9 +54,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-dream-
 
 安装器会校验官方 Codex Store 包和 Node.js，保存可恢复的外观配置，并初始化本地主题仓库。默认还会创建这些快捷方式：
 
-- `Codex Dream Skin`：启动或重新应用皮肤。
-- `Codex Dream Skin - Tray`：打开系统托盘主题控制。
-- `Codex Dream Skin - Restore`：恢复官方外观并关闭已保存的 CDP 会话。
+- `Codex 动态壁纸`：启动或重新应用壁纸。
+- `Codex 动态壁纸 - 托盘控制`：打开系统托盘控制。
+- `Codex 动态壁纸 - 恢复官方外观`：恢复官方外观并关闭已保存的 CDP 会话。
 
 如需使用自定义端口，可以在安装时传入 `-Port`。端口范围必须是 `1024` 到 `65535`。
 
@@ -58,7 +66,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-dream-
 
 ## 启动与验证
 
-推荐从 `Codex Dream Skin` 快捷方式启动。它发现 Codex 已经运行时会先询问是否重启。
+推荐从 `Codex 动态壁纸` 快捷方式启动。它发现 Codex 已经运行时会先询问是否重启。
 
 命令行启动：
 
@@ -85,7 +93,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify-dream-s
 
 ## 更换和保存主题
 
-打开 `Codex Dream Skin - Tray` 后可以：
+打开 `Codex 动态壁纸 - 托盘控制` 后可以：
 
 - 更换 PNG、JPEG、WebP 背景图，或 MP4、WebM 动态壁纸。
 - 使用「壁纸透出」滑杆调整覆盖在壁纸上的主题面板：100% 时视频保持原始画面，整页主题蒙层为零；设置会随主题持久化。
@@ -106,7 +114,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\restore-dream-
   -RestoreBaseTheme -PromptRestart
 ```
 
-如需同时删除 Dream Skin 创建的快捷方式，再增加 `-Uninstall`：
+如需同时删除动态壁纸工具创建的快捷方式，再增加 `-Uninstall`：
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\restore-dream-skin.ps1 `
@@ -119,7 +127,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\restore-dream-
 
 | 用途 | 路径 |
 |------|------|
-| Dream Skin 状态根目录 | `%LOCALAPPDATA%\CodexDreamSkin` |
+| 动态壁纸状态根目录 | `%LOCALAPPDATA%\CodexDreamSkin` |
 | 当前主题 | `%LOCALAPPDATA%\CodexDreamSkin\active-theme` |
 | 已保存主题 | `%LOCALAPPDATA%\CodexDreamSkin\themes` |
 | 导入图片归档 | `%LOCALAPPDATA%\CodexDreamSkin\images` |
@@ -157,13 +165,13 @@ Get-AppxPackage -Name OpenAI.Codex
 
 ### 验证找不到 CDP 端点
 
-通过 `Codex Dream Skin` 快捷方式启动 Codex，再运行验证脚本。普通 Codex 启动方式不会打开 Dream Skin 所需的调试会话。
+通过 `Codex 动态壁纸` 快捷方式启动 Codex，再运行验证脚本。普通 Codex 启动方式不会打开动态壁纸所需的调试会话。
 
 ### Codex 更新后皮肤失效
 
 重新运行安装器和启动快捷方式。脚本会重新发现当前注册的 Store 包，不依赖旧版本的可执行文件路径。
 
-提交问题时请从仓库的 [Issue 提交页](https://github.com/Fei-Away/Codex-Dream-Skin/issues/new/choose) 选择 Bug 模板，附上系统版本、Codex 来源、复现步骤和相关日志片段。请删除密钥、`auth.json`、中转 token 和私人对话内容。
+提交问题时请从仓库的 [Issue 提交页](https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/issues/new/choose) 选择 Bug 模板，附上系统版本、Codex 来源、复现步骤和相关日志片段。请删除密钥、`auth.json`、中转 token 和私人对话内容。
 
 ## 安全边界
 

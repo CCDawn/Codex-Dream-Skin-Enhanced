@@ -1,20 +1,28 @@
-# Codex Dream Skin for Windows
+# Codex 动态壁纸
 
 <p align="center">
   <a href="./README.md">中文</a> · <strong>English</strong>
 </p>
 
-Codex Dream Skin loads an external theme into the official Codex Windows desktop app through loopback CDP. The native sidebar, project picker, task content, and composer remain interactive. The tool does not modify WindowsApps, `app.asar`, or the app signature.
+Codex 动态壁纸 loads an external theme into the official Codex Windows desktop app through loopback CDP. The native sidebar, project picker, task content, and composer remain interactive. The tool does not modify WindowsApps, `app.asar`, or the app signature.
 
-## Graphical EXE manager
+## For users: download the EXE
 
-`windows/app/CodexDreamSkin.Manager` is a complete Windows desktop manager. Its release artifact is a
-self-contained, single-file `CodexDreamSkinManager.exe` with the tested Dream Skin engine and Node.js
-runtime embedded, so end users do not need Node.js, the .NET SDK, or manual PowerShell commands.
+1. Download [`CodexDreamSkinManager.exe`](https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/releases/latest/download/CodexDreamSkinManager.exe).
+2. Run it and choose **添加壁纸** to import an image or video.
+3. Select a wallpaper and choose **应用到 Codex**. Use **启动 / 重新应用** when needed.
+
+The release is a self-contained, single-file app with the tested wallpaper engine and Node.js runtime embedded. End users do not need Node.js, the .NET SDK, manual PowerShell commands, or administrator access.
+
+> The current release is unsigned, so Windows may show an “Unknown publisher” warning. Download only from this repository’s Releases page and verify the published SHA256.
+
+## Manager features
 
 The manager browses and previews PNG, JPEG, WebP, MP4, and WebM libraries; starts, reapplies, pauses,
-restores, and switches Dream Skin; controls wallpaper reveal; exposes tray actions; and offers optional
+restores, and switches wallpapers; controls wallpaper reveal; exposes tray actions; and offers optional
 per-user startup.
+
+## For developers: build and script install
 
 Build it with:
 
@@ -26,15 +34,15 @@ The build runs the Windows regression suite, embeds a trusted local Node.js 22+ 
 self-contained `win-x64` executable, and runs a post-publish self-test. Output is written to
 `windows/dist`.
 
-## Requirements
+### Source and script requirements
 
 - The official `OpenAI.Codex` app installed from Microsoft Store and registered for the current user.
 - Node.js 22 or newer, with `node.exe` available on `PATH`.
 - Windows PowerShell 5.1 or newer.
 
-Run the installer after Codex has fully exited. Normal use does not require administrator access or ownership changes under WindowsApps.
+These dependencies apply only to source scripts and local builds, not to the release EXE above. Run the installer after Codex has fully exited.
 
-## Install
+### Install from source
 
 Open PowerShell in the repository's `windows` directory and run:
 
@@ -44,9 +52,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-dream-
 
 The installer validates the official Codex Store package and Node.js, saves a recoverable appearance baseline, and initializes the local theme store. By default it also creates these shortcuts:
 
-- `Codex Dream Skin`: launch or reapply the skin.
-- `Codex Dream Skin - Tray`: open the system tray theme controls.
-- `Codex Dream Skin - Restore`: restore the stock appearance and close the saved CDP session.
+- `Codex 动态壁纸`: launch or reapply the wallpaper.
+- `Codex 动态壁纸 - 托盘控制`: open the system tray controls.
+- `Codex 动态壁纸 - 恢复官方外观`: restore the stock appearance and close the saved CDP session.
 
 Pass `-Port` during installation to use a fixed custom port. Valid ports range from `1024` through `65535`.
 
@@ -56,7 +64,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-dream-
 
 ## Launch and verify
 
-The `Codex Dream Skin` shortcut is the recommended launcher. It asks for confirmation before restarting an open Codex window.
+The `Codex 动态壁纸` shortcut is the recommended launcher. It asks for confirmation before restarting an open Codex window.
 
 Command-line launch:
 
@@ -83,7 +91,7 @@ Next, use the generated screenshot to check horizontal overflow and text contras
 
 ## Change and save themes
 
-Open `Codex Dream Skin - Tray` to:
+Open `Codex 动态壁纸 - 托盘控制` to:
 
 - Import a PNG, JPEG, or WebP background, or an MP4/WebM animated wallpaper.
 - Adjust wallpaper reveal: at 100% the video stays at its original opacity while the full-window theme veil reaches zero; the value persists with the theme.
@@ -104,7 +112,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\restore-dream-
   -RestoreBaseTheme -PromptRestart
 ```
 
-Add `-Uninstall` to also remove the shortcuts created by Dream Skin:
+Add `-Uninstall` to also remove the shortcuts created by the wallpaper tool:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\restore-dream-skin.ps1 `
@@ -117,7 +125,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\restore-dream-
 
 | Purpose | Path |
 |---------|------|
-| Dream Skin state root | `%LOCALAPPDATA%\CodexDreamSkin` |
+| Wallpaper state root | `%LOCALAPPDATA%\CodexDreamSkin` |
 | Active theme | `%LOCALAPPDATA%\CodexDreamSkin\active-theme` |
 | Saved themes | `%LOCALAPPDATA%\CodexDreamSkin\themes` |
 | Imported image archive | `%LOCALAPPDATA%\CodexDreamSkin\images` |
@@ -155,13 +163,13 @@ When `-Port` is omitted, the launcher searches for a free port beginning at `933
 
 ### Verification cannot find a CDP endpoint
 
-Launch Codex through the `Codex Dream Skin` shortcut, then run verification. A normal Codex launch does not open the debug session used by Dream Skin.
+Launch Codex through the `Codex 动态壁纸` shortcut, then run verification. A normal Codex launch does not open the debug session used by the wallpaper engine.
 
 ### The skin stops working after a Codex update
 
 Run the installer and launch shortcut again. The scripts rediscover the currently registered Store package instead of trusting an executable path from an older app version.
 
-Open the repository's [new issue page](https://github.com/Fei-Away/Codex-Dream-Skin/issues/new/choose) and choose the bug form when reporting a problem. Include the Windows version, Codex source, reproduction steps, and relevant log lines. Remove secrets, `auth.json`, relay tokens, and private conversation content.
+Open the repository's [new issue page](https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/issues/new/choose) and choose the bug form when reporting a problem. Include the Windows version, Codex source, reproduction steps, and relevant log lines. Remove secrets, `auth.json`, relay tokens, and private conversation content.
 
 ## Security boundaries
 

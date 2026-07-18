@@ -1,4 +1,4 @@
-<h1 align="center">Codex Dream Skin</h1>
+<h1 align="center">Codex 动态壁纸</h1>
 
 <p align="center">
   <strong>Themes, image wallpapers, and live wallpapers for the Codex desktop app.</strong><br>
@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/social-preview.png" alt="Codex Dream Skin themes and live wallpapers" width="100%">
+  <img src="docs/images/social-preview.png" alt="Codex 动态壁纸" width="100%">
 </p>
 
 <p align="center">
@@ -32,7 +32,7 @@
   <a href="https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/issues">Report an issue</a>
 </p>
 
-> Unofficial and not affiliated with OpenAI. Codex Dream Skin injects themes through loopback-only `127.0.0.1` CDP. It does not modify WindowsApps, `.app`, `app.asar`, or the official code signature.
+> Unofficial and not affiliated with OpenAI. Codex 动态壁纸 injects themes through loopback-only `127.0.0.1` CDP. It does not modify WindowsApps, `.app`, `app.asar`, or the official code signature.
 
 ## Why use it
 
@@ -46,10 +46,10 @@
 ## Windows: start in 30 seconds
 
 1. Download [`CodexDreamSkinManager.exe`](https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/releases/latest/download/CodexDreamSkinManager.exe).
-2. Run it and select a PNG, JPEG, WebP, MP4, or WebM from your wallpaper library.
+2. Run it and choose **添加壁纸** to import a PNG, JPEG, WebP, MP4, or WebM wallpaper.
 3. Click **应用到 Codex**. Use **启动 / 重新应用** if Codex needs the skin reapplied.
 
-The manager is a self-contained single-file app with the tested Dream Skin engine and Node.js runtime embedded. End users do not need the .NET SDK, Node.js, or manual PowerShell commands.
+The manager is a self-contained single-file app with the tested wallpaper engine and Node.js runtime embedded. End users do not need the .NET SDK, Node.js, or manual PowerShell commands.
 
 > Releases are currently unsigned, so Windows may show an unknown-publisher prompt. Download only from this repository's [Releases](https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/releases) page and verify the companion `.sha256` file.
 
@@ -94,7 +94,7 @@ Use the menu-bar Studio to import, save, and switch image themes. See [`macos/RE
 
 | Windows / shared theme | macOS dark theme |
 |---|---|
-| ![Codex Dream Skin red-white sci-fi theme](docs/images/screenshot-demo-art.png) | ![Codex Dream Skin macOS dark theme](docs/images/screenshot-macos-home.png) |
+| ![Codex 动态壁纸 red-white sci-fi theme](docs/images/screenshot-demo-art.png) | ![Codex 动态壁纸 macOS dark theme](docs/images/screenshot-macos-home.png) |
 
 See [`docs/showcase.en.md`](./docs/showcase.en.md) for more real screenshots, the character preset, and eight concept directions.
 
@@ -103,7 +103,7 @@ See [`docs/showcase.en.md`](./docs/showcase.en.md) for more real screenshots, th
 ```text
 Local wallpaper / theme config
               ↓
-Dream Skin local theme store
+Codex 动态壁纸 local theme store
               ↓
 127.0.0.1 loopback CDP
               ↓
@@ -162,7 +162,7 @@ No. It controls only the theme background inside Codex. The Windows manager can 
 <details>
 <summary><strong>Why can an official Codex update break a theme?</strong></summary>
 
-Dream Skin depends on the Codex renderer DOM and local CDP. Official updates can move those structures. **启动 / 重新应用** often fixes it; compatibility patches are published in this repository.
+The wallpaper engine depends on the Codex renderer DOM and local CDP. Official updates can move those structures. **启动 / 重新应用** often fixes it; compatibility patches are published in this repository.
 </details>
 
 <details>
@@ -200,7 +200,7 @@ Thanks to [passion8.cc](https://passion8.cc/register?aff=TuPe) for sponsoring th
 ## Feedback and contributions
 
 - Announcements, theme sharing, and community help: [GitHub Discussions](https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/discussions).
-- Launch announcement: [Codex Dream Skin v1.0.0 is now available](https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/discussions/5).
+- Launch announcement: [Codex 动态壁纸 v1.0.0 is now available](https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/discussions/5).
 - Use the [Bug / Feature issue templates](./.github/ISSUE_TEMPLATE/).
 - PRs should include the platform, reproduction or goal, validation command, and restore test.
 - Contribution guide: [中文](./.github/CONTRIBUTING.md) · [English](./.github/CONTRIBUTING.en.md)
@@ -213,4 +213,4 @@ This repository is an enhanced derivative of [Fei-Away/Codex-Dream-Skin](https:/
 
 ---
 
-If Dream Skin makes Codex feel more like your own workspace, consider leaving a **Star** and sharing a screenshot of your theme.
+If Codex 动态壁纸 makes Codex feel more like your own workspace, consider leaving a **Star** and sharing a screenshot of your theme.

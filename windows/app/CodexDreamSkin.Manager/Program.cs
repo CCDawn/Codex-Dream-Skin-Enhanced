@@ -5,6 +5,7 @@ namespace CodexDreamSkin.Manager;
 internal static class Program
 {
   private const string MutexName = @"Local\CodexDreamSkin.Manager";
+  private const string ProductName = "Codex 动态壁纸";
 
   [STAThread]
   private static int Main(string[] args)
@@ -13,8 +14,8 @@ internal static class Program
     if (!createdNew && !args.Contains("--self-test", StringComparer.OrdinalIgnoreCase))
     {
       MessageBox.Show(
-        "Codex Dream Skin Manager 已经在运行，请查看任务栏托盘。",
-        "Codex Dream Skin",
+        $"{ProductName}已经在运行，请查看任务栏托盘。",
+        ProductName,
         MessageBoxButtons.OK,
         MessageBoxIcon.Information);
       return 0;
@@ -58,7 +59,7 @@ internal static class Program
 
       MessageBox.Show(
         $"启动失败：{exception.Message}\r\n\r\n日志：{logPath}",
-        "Codex Dream Skin",
+        ProductName,
         MessageBoxButtons.OK,
         MessageBoxIcon.Error);
       return 1;

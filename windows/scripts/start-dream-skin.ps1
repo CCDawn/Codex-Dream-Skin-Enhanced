@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
   [int]$Port = 9335,
   [switch]$RestartExisting,
@@ -86,9 +86,9 @@ try {
   if (-not $debugReady -and $codexProcesses.Count -gt 0) {
     $restartAuthorized = [bool]$RestartExisting
     if (-not $restartAuthorized -and $PromptRestart) {
-      $restartAuthorized = Confirm-DreamSkinRestart -Message 'Codex must restart once to enable Dream Skin. Unsaved input may be lost. Restart now?'
+      $restartAuthorized = Confirm-DreamSkinRestart -Message 'Codex 需要重启一次以启用动态壁纸，未保存的输入可能丢失。现在重启吗？'
       if (-not $restartAuthorized) {
-        Write-Host 'Dream Skin launch was cancelled; Codex was not changed.'
+        Write-Host 'Codex 动态壁纸启动已取消；Codex 未发生更改。'
         exit 0
       }
     }
@@ -282,7 +282,7 @@ try {
     throw $startupError
   }
 
-  Write-Host "Codex Dream Skin is active on verified loopback port $Port."
+  Write-Host "Codex 动态壁纸已在经过验证的本机端口 $Port 上运行。"
 } finally {
   if ($null -ne $operationLock) { Exit-DreamSkinOperationLock -Mutex $operationLock }
 }

@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
   [int]$Port = 9335,
   [switch]$Uninstall,
@@ -93,9 +93,9 @@ try {
   $forceAuthorized = [bool]$ForceRestart
   if ($shouldCloseCodex -and $PromptRestart) {
     $restartMessage = if ($NoRelaunch) {
-      'Restore will close Codex and remove Dream Skin plus its CDP session. Continue?'
+      '恢复将关闭 Codex，并移除动态壁纸及其 CDP 会话。是否继续？'
     } else {
-      'Restore will close Codex, remove Dream Skin and its CDP session, then reopen the official app. Continue?'
+      '恢复将关闭 Codex，移除动态壁纸及其 CDP 会话，然后重新打开官方应用。是否继续？'
     }
     $forceAuthorized = Confirm-DreamSkinRestart -Message $restartMessage
     if (-not $forceAuthorized) {
@@ -152,6 +152,11 @@ try {
       $desktop = [Environment]::GetFolderPath('Desktop')
       $startMenu = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'
       @(
+        (Join-Path $desktop 'Codex 动态壁纸.lnk'),
+        (Join-Path $desktop 'Codex 动态壁纸 - 恢复官方外观.lnk'),
+        (Join-Path $desktop 'Codex 动态壁纸 - 托盘控制.lnk'),
+        (Join-Path $startMenu 'Codex 动态壁纸.lnk'),
+        (Join-Path $startMenu 'Codex 动态壁纸 - 托盘控制.lnk'),
         (Join-Path $desktop 'Codex Dream Skin.lnk'),
         (Join-Path $desktop 'Codex Dream Skin - Restore.lnk'),
         (Join-Path $desktop 'Codex Dream Skin - Tray.lnk'),
@@ -177,7 +182,7 @@ try {
     throw $restoreError
   }
 
-  Write-Host 'Dream Skin restore actions completed; any saved CDP session was closed.'
+  Write-Host 'Codex 动态壁纸恢复操作已完成；保存的 CDP 会话已关闭。'
 } finally {
   Exit-DreamSkinOperationLock -Mutex $operationLock
 }

@@ -71,7 +71,7 @@ https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/releases/latest/download/Cod
 
 开源地址和 Windows 下载链接放在评论区 / 个人主页，也可以直接搜索：
 
-`CCDawn Codex Dream Skin`
+`CCDawn Codex 动态壁纸`
 
 #Codex #OpenAI #程序员桌面 #动态壁纸 #开源软件 #Windows软件 #效率工具
 
@@ -83,13 +83,13 @@ https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/releases/latest/download/Cod
 
 1. 我做了一个 Codex 动态壁纸管理器，单文件 EXE 下载即用
 2. 不改官方安装包，也能给 Codex 换主题和视频背景
-3. Codex Dream Skin：让写代码的窗口真正属于你
+3. Codex 动态壁纸：让写代码的窗口真正属于你
 
 ### 正文
 
 默认 Codex 很干净，但不一定像你的工作空间。
 
-**Codex Dream Skin** 是一个开源的 Codex 桌面主题与动态壁纸工具。它不是把假截图盖在窗口上：侧栏、任务、项目选择器和输入框仍然是原生控件，可以正常点击和输入。
+**Codex 动态壁纸**是一个开源的 Codex 桌面主题与动态壁纸工具。它不是把假截图盖在窗口上：侧栏、任务、项目选择器和输入框仍然是原生控件，可以正常点击和输入。
 
 Windows 版本现在提供完整图形化管理器：
 
@@ -111,7 +111,7 @@ https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/releases/latest/download/Cod
 
 ## 英文短版
 
-**Codex Dream Skin** adds interactive themes and live wallpapers to the Codex desktop app.
+**Codex 动态壁纸** adds interactive themes and live wallpapers to the Codex desktop app.
 
 - Self-contained Windows manager
 - PNG, JPEG, WebP, MP4, and WebM
