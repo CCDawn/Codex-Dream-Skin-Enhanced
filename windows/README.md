@@ -6,6 +6,28 @@
 
 Codex Dream Skin 通过本机回环 CDP 给官方 Codex Windows 桌面应用加载外部主题。它保留原生侧栏、项目选择、任务内容和输入框，不修改 WindowsApps、`app.asar` 或应用签名。
 
+## 图形化 EXE 管理器
+
+`windows/app/CodexDreamSkin.Manager` 提供完整的 Windows 图形化管理器。发布版是自包含的
+单文件 `CodexDreamSkinManager.exe`，内置经过验证的 Dream Skin 引擎和 Node.js 运行时；最终
+用户不需要安装 Node.js、.NET SDK 或手动运行 PowerShell。
+
+管理器支持：
+
+- 浏览、搜索并预览桌面壁纸库中的 PNG、JPEG、WebP、MP4 和 WebM。
+- 一键启动或重新应用 Dream Skin、切换壁纸、暂停/恢复以及还原官方外观。
+- 调整「壁纸透出」程度，100% 时视频保持原始画面且整页主题蒙层为零。
+- 系统托盘控制和可选的当前用户开机启动。
+
+开发者可使用下列命令构建单文件版本：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\app\build-manager.ps1
+```
+
+构建脚本会运行 Windows 回归测试、嵌入本机可信的 Node.js 22+ 运行时、发布自包含
+`win-x64` EXE，并执行发布后自检。输出位于 `windows/dist`。
+
 ## 运行要求
 
 - 从 Microsoft Store 安装且已注册到当前用户的官方 `OpenAI.Codex` 应用。

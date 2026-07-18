@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>CodexDreamSkinManager</AssemblyName>
+    <RootNamespace>CodexDreamSkin.Manager</RootNamespace>
+    <Version>1.0.0</Version>
+    <Product>Codex Dream Skin Manager</Product>
+    <Description>One-click wallpaper manager for the official Codex Windows app.</Description>
+    <Authors>CCDawn</Authors>
+    <Copyright>Copyright © CCDawn</Copyright>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <PublishTrimmed>false</PublishTrimmed>
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\assets\dream-reference.jpg" LogicalName="DreamSkin.Engine.assets.dream-reference.jpg" />
+    <EmbeddedResource Include="..\..\assets\dream-skin.css" LogicalName="DreamSkin.Engine.assets.dream-skin.css" />
+    <EmbeddedResource Include="..\..\assets\renderer-inject.js" LogicalName="DreamSkin.Engine.assets.renderer-inject.js" />
+    <EmbeddedResource Include="..\..\assets\theme.json" LogicalName="DreamSkin.Engine.assets.theme.json" />
+    <EmbeddedResource Include="..\..\scripts\common-windows.ps1" LogicalName="DreamSkin.Engine.scripts.common-windows.ps1" />
+    <EmbeddedResource Include="..\..\scripts\config-utf8.ps1" LogicalName="DreamSkin.Engine.scripts.config-utf8.ps1" />
+    <EmbeddedResource Include="..\..\scripts\image-metadata.mjs" LogicalName="DreamSkin.Engine.scripts.image-metadata.mjs" />
+    <EmbeddedResource Include="..\..\scripts\injector.mjs" LogicalName="DreamSkin.Engine.scripts.injector.mjs" />
+    <EmbeddedResource Include="..\..\scripts\install-dream-skin.ps1" LogicalName="DreamSkin.Engine.scripts.install-dream-skin.ps1" />
+    <EmbeddedResource Include="..\..\scripts\manager-command.ps1" LogicalName="DreamSkin.Engine.scripts.manager-command.ps1" />
+    <EmbeddedResource Include="..\..\scripts\restore-dream-skin.ps1" LogicalName="DreamSkin.Engine.scripts.restore-dream-skin.ps1" />
+    <EmbeddedResource Include="..\..\scripts\start-dream-skin.ps1" LogicalName="DreamSkin.Engine.scripts.start-dream-skin.ps1" />
+    <EmbeddedResource Include="..\..\scripts\theme-windows.ps1" LogicalName="DreamSkin.Engine.scripts.theme-windows.ps1" />
+    <EmbeddedResource Include="..\..\scripts\tray-dream-skin.ps1" LogicalName="DreamSkin.Engine.scripts.tray-dream-skin.ps1" />
+    <EmbeddedResource Include="..\..\scripts\verify-dream-skin.ps1" LogicalName="DreamSkin.Engine.scripts.verify-dream-skin.ps1" />
+    <EmbeddedResource Include="$(NodeExe)" LogicalName="DreamSkin.Runtime.node.exe" Condition="Exists('$(NodeExe)')" />
+    <EmbeddedResource Include="$(NodeLicense)" LogicalName="DreamSkin.Runtime.NODE-LICENSE.txt" Condition="Exists('$(NodeLicense)')" />
+  </ItemGroup>
+
+  <Target Name="ValidateBundledRuntime" BeforeTargets="BeforeBuild">
+    <Error Condition="!Exists('$(NodeExe)')" Text="Set /p:NodeExe to a trusted Node.js 22+ node.exe." />
+    <Error Condition="!Exists('$(NodeLicense)')" Text="Set /p:NodeLicense to the matching Node.js LICENSE file." />
+  </Target>
+</Project>

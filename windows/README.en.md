@@ -6,6 +6,26 @@
 
 Codex Dream Skin loads an external theme into the official Codex Windows desktop app through loopback CDP. The native sidebar, project picker, task content, and composer remain interactive. The tool does not modify WindowsApps, `app.asar`, or the app signature.
 
+## Graphical EXE manager
+
+`windows/app/CodexDreamSkin.Manager` is a complete Windows desktop manager. Its release artifact is a
+self-contained, single-file `CodexDreamSkinManager.exe` with the tested Dream Skin engine and Node.js
+runtime embedded, so end users do not need Node.js, the .NET SDK, or manual PowerShell commands.
+
+The manager browses and previews PNG, JPEG, WebP, MP4, and WebM libraries; starts, reapplies, pauses,
+restores, and switches Dream Skin; controls wallpaper reveal; exposes tray actions; and offers optional
+per-user startup.
+
+Build it with:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\app\build-manager.ps1
+```
+
+The build runs the Windows regression suite, embeds a trusted local Node.js 22+ runtime, publishes a
+self-contained `win-x64` executable, and runs a post-publish self-test. Output is written to
+`windows/dist`.
+
 ## Requirements
 
 - The official `OpenAI.Codex` app installed from Microsoft Store and registered for the current user.
