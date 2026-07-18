@@ -780,6 +780,56 @@ try {
   )) {
     if (-not $css.Contains($requiredCss)) { throw "Windows immersive CSS is missing: $requiredCss" }
   }
+
+  $managerCommandPath = Join-Path $Root 'scripts\manager-command.ps1'
+  $managerBuildPath = Join-Path $Root 'app\build-manager.ps1'
+  $managerProjectPath = Join-Path $Root 'app\CodexDreamSkin.Manager\CodexDreamSkin.Manager.csproj'
+  foreach ($managerPath in @($managerCommandPath, $managerBuildPath, $managerProjectPath)) {
+    if (-not (Test-Path -LiteralPath $managerPath -PathType Leaf)) {
+      throw "Graphical manager file is missing: $managerPath"
+    }
+  }
+  foreach ($managerScriptPath in @($managerCommandPath, $managerBuildPath)) {
+    $managerTokens = $null
+    $managerParseErrors = $null
+    [System.Management.Automation.Language.Parser]::ParseFile(
+      $managerScriptPath, [ref]$managerTokens, [ref]$managerParseErrors
+    ) | Out-Null
+    if ($managerParseErrors.Count -gt 0) {
+      throw "Graphical manager PowerShell entry point failed to parse: $managerScriptPath"
+    }
+  }
+  $managerCommandSource = Read-DreamSkinUtf8File -Path $managerCommandPath
+  foreach ($managerAction in @('SetWallpaper', 'SetReveal', 'Pause', 'Resume', 'Status')) {
+    if (-not $managerCommandSource.Contains("'$managerAction'")) {
+      throw "Graphical manager command is missing: $managerAction"
+    }
+  }
+  $managerProjectSource = Read-DreamSkinUtf8File -Path $managerProjectPath
+  foreach ($managerPublishContract in @(
+    '<PublishSingleFile>true</PublishSingleFile>',
+    '<SelfContained>true</SelfContained>',
+    'DreamSkin.Runtime.node.exe',
+    'DreamSkin.Engine.scripts.manager-command.ps1'
+  )) {
+    if (-not $managerProjectSource.Contains($managerPublishContract)) {
+      throw "Graphical manager packaging contract is missing: $managerPublishContract"
+    }
+  }
+  $managerFormSource = Read-DreamSkinUtf8File -Path (
+    Join-Path $Root 'app\CodexDreamSkin.Manager\MainForm.cs'
+  )
+  foreach ($managerUiContract in @(
+    '100% · 原始壁纸画面',
+    '开机启动管理器',
+    '退出管理器',
+    '支持 PNG、JPEG、WebP、MP4、WebM'
+  )) {
+    if (-not $managerFormSource.Contains($managerUiContract)) {
+      throw "Graphical manager UI contract is missing: $managerUiContract"
+    }
+  }
+
   $traySource = Read-DreamSkinUtf8File -Path (Join-Path $Root 'scripts\tray-dream-skin.ps1')
   foreach ($requiredTrayAction in @('System.Windows.Forms.NotifyIcon', 'System.Windows.Forms.TrackBar', '壁纸透出', '暂停皮肤', '更换背景图或视频', '*.mp4;*.webm', '已保存主题', '完全恢复 Codex')) {
     if (-not $traySource.Contains($requiredTrayAction)) { throw "Tray action is missing: $requiredTrayAction" }

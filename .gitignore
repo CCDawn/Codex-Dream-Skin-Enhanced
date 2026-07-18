@@ -8,3 +8,6 @@ README.preview.html
 docs/readme-preview.html
 release/
 runtime/
+windows/app/**/bin/
+windows/app/**/obj/
+windows/dist/
