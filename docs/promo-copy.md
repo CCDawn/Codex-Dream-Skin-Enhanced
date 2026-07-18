@@ -1,73 +1,89 @@
 # 宣传文案（可直接发）
 
-仓库：https://github.com/Fei-Away/Codex-Dream-Skin
+仓库：https://github.com/CCDawn/Codex-Dream-Skin-Enhanced
+
+Windows 下载：https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/releases/latest/download/CodexDreamSkinManager.exe
 
 ---
 
-## 短版（朋友圈 / 群公告）
+## 一句话
 
-Codex 也能「换皮肤」了。
+给 Codex 桌面端加上可交互的主题、静态壁纸和动态壁纸：原生 UI 保持可用，不修改官方安装包，还能一键恢复。
 
-不是整窗假截图，侧栏、卡片、输入框都还是真控件。  
-一张图一套主题：千玺、热巴、Miku、KUN、ENFP……你想要的样子自己配。
+## 短版（群公告 / 朋友圈）
 
-本机注入，不改官方安装包，还能一键恢复。
+Codex 现在可以直接换主题和动态壁纸了。
 
-开源地址：  
-https://github.com/Fei-Away/Codex-Dream-Skin
+- Windows 有完整单文件 EXE，下载即用
+- 支持 PNG / JPEG / WebP / MP4 / WebM
+- 原生侧栏、任务和输入框继续交互
+- 本机注入，不修改 WindowsApps / app.asar
+- 随时暂停或恢复官方外观
 
-感谢 Passion8 赞助：https://passion8.cc/register?aff=TuPe
+开源地址：
 
----
+https://github.com/CCDawn/Codex-Dream-Skin-Enhanced
+
+Windows 直接下载：
+
+https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/releases/latest/download/CodexDreamSkinManager.exe
 
 ## 中版（公众号 / 即刻 / 小红书）
 
-标题可选：
+### 标题可选
 
-1. 我给 Codex 做了个皮肤商店：从人民的 AI 到初音未来  
-2. 写代码也能有爱豆同款桌面  
-3. Codex Dream Skin：不拆包，也能把官方界面变成你的
+1. 我做了一个 Codex 动态壁纸管理器，单文件 EXE 下载即用
+2. 不改官方安装包，也能给 Codex 换主题和视频背景
+3. Codex Dream Skin：让写代码的窗口真正属于你
 
-正文：
+### 正文
 
-还在用默认灰白 Codex？有点可惜。
+默认 Codex 很干净，但不一定像你的工作空间。
 
-**Codex Dream Skin** 是一套给 Codex 桌面端用的外部主题方案：  
-用本机 CDP 把样式和横幅「贴」上去，**不修改官方 `.app` / `app.asar`**，侧栏、建议卡、项目选择、输入框都是原生可点。
+**Codex Dream Skin** 是一个开源的 Codex 桌面主题与动态壁纸工具。它不是把假截图盖在窗口上：侧栏、任务、项目选择器和输入框仍然是原生控件，可以正常点击和输入。
 
-你看到的热巴紫夜、千玺清透、Miku 蓝粉、KUN 黑金、ENFP 小宇宙……都是同一套能力换图 + 换色的结果。
+Windows 版本现在提供完整图形化管理器：
 
-开源仓库（含效果图与安装脚本）：  
-https://github.com/Fei-Away/Codex-Dream-Skin
+- 浏览和搜索本地壁纸库
+- 预览图片与 MP4/WebM 视频
+- 一键应用到 Codex
+- 调整壁纸透出度
+- 暂停主题或恢复官方外观
 
-想稳定接模型的话，可以走赞助方 Passion8（与换肤分开配置）：  
-https://passion8.cc/register?aff=TuPe
+程序通过只绑定 `127.0.0.1` 的本机 CDP 工作，不修改 WindowsApps、`.app`、`app.asar` 或官方代码签名。Windows 发布版是自包含单文件 EXE，不需要另外安装 Node.js 或 .NET SDK。
 
----
+项目主页：
 
-## 长版钩子（发帖置顶）
+https://github.com/CCDawn/Codex-Dream-Skin-Enhanced
 
-> 写代码的桌面，也可以有自己的皮肤。
+Windows 下载：
 
-- 真交互，不是 P 一张假 UI  
-- 可换图、可恢复  
-- Mac / Windows 脚本都在仓库里  
-- 效果图直接看 README Gallery  
+https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/releases/latest/download/CodexDreamSkinManager.exe
 
-👉 https://github.com/Fei-Away/Codex-Dream-Skin
+## 英文短版
 
----
+**Codex Dream Skin** adds interactive themes and live wallpapers to the Codex desktop app.
 
-## 一句话 slogan
+- Self-contained Windows manager
+- PNG, JPEG, WebP, MP4, and WebM
+- Native sidebar, tasks, and composer stay interactive
+- Loopback-only local CDP
+- No official app package modification
+- One-click restore
 
-- 给 Codex 换一张会呼吸的脸  
-- 一张图，一种心情  
-- 写代码，也要有氛围感  
-- 不拆包，也能全员爱豆版 Codex  
+GitHub: https://github.com/CCDawn/Codex-Dream-Skin-Enhanced
 
----
+Windows: https://github.com/CCDawn/Codex-Dream-Skin-Enhanced/releases/latest/download/CodexDreamSkinManager.exe
 
-## 注意（发的时候自己把关）
+## 标签建议
 
-效果图含公众人物 / IP 形象时，**仅作主题示意**。  
-二次商用或大规模传播前，请确认肖像与商标授权，避免纠纷。
+```text
+#Codex #OpenAI #DesktopCustomization #LiveWallpaper #Windows #macOS #OpenSource #DeveloperTools
+```
+
+## 发布注意
+
+- 优先配真实 Codex 效果截图或仓库的 `docs/images/social-preview.png`。
+- 人物/IP 主题只作为 Showcase 示例；大范围传播前确认肖像、素材与商标权利。
+- 不要描述为 OpenAI 官方功能或官方主题商店。
+- 赞助链接与主题安装互相独立，不要让用户误以为必须配置第三方模型服务。
